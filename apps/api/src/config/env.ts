@@ -1,0 +1,27 @@
+import dotenv from "dotenv";
+import { z } from "zod";
+
+dotenv.config();
+
+const envSchema = z.object({
+    NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
+
+    PORT: z.coerce.number().default(8000),
+
+    CLIENT_URL: z.string().url().default("http://localhost:3000"),
+
+    MONGODB_URI: z.string().min(1),
+});
+
+const parsedEnv = envSchema.safeParse(process.env);
+
+if (!parsedEnv.success) {
+    console.error(
+        "❌ Invalid environment variables:",
+        parsedEnv.error.flatten().fieldErrors
+    );
+
+    process.exit(1);
+}
+
+export const env = parsedEnv.data;
