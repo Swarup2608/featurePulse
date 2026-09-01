@@ -1,7 +1,8 @@
 import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
-import { env } from "./config/env"
+import { env } from "./config/env";
+import authRoutes from "./modules/auth/auth.routes";
 
 dotenv.config();
 
@@ -23,5 +24,7 @@ app.get("/health", (_req, res) => {
     environment: env.NODE_ENV
   });
 });
+
+app.use("/api/v1/auth", authRoutes);
 
 export default app;

@@ -1,7 +1,19 @@
 import dotenv from "dotenv";
+import type { SignOptions } from "jsonwebtoken";
 import { z } from "zod";
 
 dotenv.config();
+
+type JwtExpiresIn = NonNullable<SignOptions["expiresIn"]>;
+
+const jwtExpiresInSchema = z
+    .string()
+    .trim()
+    .regex(
+        /^\d+(\.\d+)?\s*(milliseconds?|msecs?|msec|ms|seconds?|secs?|sec|s|minutes?|mins?|min|m|hours?|hrs?|hr|h|days?|day|d|weeks?|week|w|years?|year|yrs?|yr|y)?$/i,
+        "JWT expiry must be a valid duration like 15m, 7d, or 3600"
+    )
+    .transform((value): JwtExpiresIn => value as JwtExpiresIn);
 
 const envSchema = z.object({
     NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
@@ -16,9 +28,9 @@ const envSchema = z.object({
 
     JWT_REFRESH_SECRET: z.string().min(32),
 
-    JWT_ACCESS_EXPIRES_IN: z.string().default("15m"),
+    JWT_ACCESS_EXPIRES_IN: jwtExpiresInSchema.default("15m"),
 
-    JWT_REFRESH_EXPIRES_IN: z.string().default("7d"),
+    JWT_REFRESH_EXPIRES_IN: jwtExpiresInSchema.default("7d"),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);
