@@ -1,6 +1,6 @@
 import cors from "cors";
 import dotenv from "dotenv";
-import express from "express";
+import express, { ErrorRequestHandler } from "express";
 import { env } from "./config/env";
 import authRoutes from "./modules/auth/auth.routes";
 
@@ -26,5 +26,20 @@ app.get("/health", (_req, res) => {
 });
 
 app.use("/api/v1/auth", authRoutes);
+
+const jsonParseErrorHandler: ErrorRequestHandler = (err, _req, res, next) => {
+  if (err instanceof SyntaxError && "body" in err) {
+    res.status(400).json({
+      success: false,
+      message: "Invalid JSON body. Send raw JSON without wrapping it in quotes.",
+    });
+
+    return;
+  }
+
+  next(err);
+};
+
+app.use(jsonParseErrorHandler);
 
 export default app;
