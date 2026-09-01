@@ -11,6 +11,14 @@ const envSchema = z.object({
     CLIENT_URL: z.string().url().default("http://localhost:3000"),
 
     MONGODB_URI: z.string().min(1),
+
+    JWT_ACCESS_SECRET: z.string().min(32),
+
+    JWT_REFRESH_SECRET: z.string().min(32),
+
+    JWT_ACCESS_EXPIRES_IN: z.string().default("15m"),
+
+    JWT_REFRESH_EXPIRES_IN: z.string().default("7d"),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);
