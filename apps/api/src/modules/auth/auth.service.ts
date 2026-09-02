@@ -5,7 +5,7 @@ import { Organization } from "../organizations/organization.model";
 import { Membership } from "../memberships/membership.model";
 import { LoginInput, RegisterInput } from "./auth.validation";
 import { generateSlug } from "../../utils/slug";
-import { generateAccessToken, generateRefreshToken } from "../../utils/token";
+import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from "../../utils/token";
 
 export const registerUser = async(input : RegisterInput) => {
     const existingUser = await User.findOne({
@@ -125,4 +125,16 @@ export const getCurrentUser = async(userId: string) =>       {
         name: user.name,
         email: user.email
     }
+}
+
+export const refreshAccessToken = async (refreshToken: string) => {
+    const payload = verifyRefreshToken(refreshToken);
+    const user = await User.findById(payload.userId);
+
+    if(!user){
+        throw new Error("User no longer exists!");
+    }
+    const accessToken = generateAccessToken(user._id);
+
+    return {accessToken};
 }

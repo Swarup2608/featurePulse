@@ -4,6 +4,7 @@ import { env } from "./config/env"
 
 const PORT = env.PORT;
 
+
 const startServer = async (): Promise<void> => {
   await connectDatabase();
 

@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 
 import { registerSchema, loginSchema } from "./auth.validation";
-import { registerUser, loginUser, getCurrentUser } from "./auth.service";
+import { registerUser, loginUser, getCurrentUser, refreshAccessToken } from "./auth.service";
 import { env } from "../../config/env";
 
 export const registerController = async(req: Request, res: Response): Promise<void> => {
@@ -82,7 +82,7 @@ export const loginController = async(req: Request, res: Response) : Promise<void
     }
 }
 
-export const getMe = async(req: Request, res: Response) : Promise<void> => {
+export const getMeController = async(req: Request, res: Response) : Promise<void> => {
     try{
         if(!req.userId){
             res.status(401).json({
@@ -113,4 +113,54 @@ export const getMe = async(req: Request, res: Response) : Promise<void> => {
             message: "Internal server Error!"
         });
     }
+}
+
+export const refreshAccessTokenController = async (req: Request, res: Response) : Promise<void> => {
+    try{
+        const refreshToken = req.cookies?.refreshToken;
+        if(!refreshToken){
+            res.status(401).json({
+                success: false,
+                message: "Refresh token not found",
+            });
+
+            return;
+        }
+
+        const result = await refreshAccessToken(refreshToken);
+
+        res.status(200).json({
+            success: true,
+            message: "Access token refreshed!",
+            data: {
+                accessToken: result.accessToken
+            }
+        });
+    }
+    catch(error){
+        if(error instanceof Error){
+            res.status(404).json({
+                success: false,
+                message: error.message
+            });
+            return;
+        }
+        res.status(501).json({
+            success: false,
+            message: "Internal server Error!"
+        });
+    }
+}
+
+export const logoutController = async (req: Request, res: Response) : Promise<void> => {
+    res.clearCookie("refreshToken",{
+        httpOnly: true,
+        secure: env.NODE_ENV === "production",
+        sameSite: "lax"
+    });
+
+    res.status(200).json({
+        success: true,
+        message: "Logged out successfully!"
+    })
 }

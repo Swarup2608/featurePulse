@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import express, { ErrorRequestHandler } from "express";
 import { env } from "./config/env";
 import authRoutes from "./modules/auth/auth.routes";
+import cookieParser from "cookie-parser";
 
 dotenv.config();
 
@@ -11,11 +12,13 @@ const app = express();
 app.use(
   cors({
     origin: env.CLIENT_URL,
-    credentials: true,
+    credentials: true
   })
 );
 
 app.use(express.json());
+
+app.use(cookieParser());
 
 app.get("/health", (_req, res) => {
   res.status(200).json({
