@@ -10,7 +10,7 @@ const membershipSchema = new Schema<IMembership>(
     
     organizationId: { type: Schema.Types.ObjectId, ref: "Organization", required: true }, 
     
-    role: { type: String, enum: ["OWNER", "ADMIN", "MEMBER"], default: "MEMBER", required: true }
+    role: { type: String, enum: ["OWNER", "ADMIN", "MEMBER", "VIEWER"], default: "MEMBER", required: true }
   },
   {
     timestamps: true,

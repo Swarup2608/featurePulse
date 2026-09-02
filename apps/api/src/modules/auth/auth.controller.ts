@@ -51,10 +51,7 @@ export const loginController = async (req: Request, res: Response): Promise<void
 
 export const getMeController = async (req: Request, res: Response): Promise<void> => {
     if (!req.userId) {
-        throw new AppError(
-            "Authentication required",
-            401
-        );
+        throw new AppError("Authentication required", 401);
     }
 
     const user = await getCurrentUser(req.userId);
@@ -70,10 +67,7 @@ export const getMeController = async (req: Request, res: Response): Promise<void
 export const refreshAccessTokenController = async (req: Request, res: Response): Promise<void> => {
     const refreshToken = req.cookies?.refreshToken;
     if (!refreshToken) {
-        throw new AppError(
-            "Refresh token not found",
-            401
-        );
+        throw new AppError("Refresh token not found", 401);
     }
 
     const result = await refreshAccessToken(refreshToken);

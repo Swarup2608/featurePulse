@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import express, { ErrorRequestHandler } from "express";
 import { env } from "./config/env";
 import authRoutes from "./modules/auth/auth.routes";
+import projectRoutes from "./modules/projects/project.routes";
 import cookieParser from "cookie-parser";
 import { ErrorHandler } from "./middleware/error.middleware";
 
@@ -30,6 +31,7 @@ app.get("/health", (_req, res) => {
 });
 
 app.use("/api/v1/auth", authRoutes);
+app.use("/api/v1/organizations/:organizationId/projects",projectRoutes);
 
 // Error middleware MUST come after routes
 app.use(ErrorHandler);

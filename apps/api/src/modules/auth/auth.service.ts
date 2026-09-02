@@ -14,7 +14,7 @@ export const registerUser = async(input : RegisterInput) => {
     });
 
     if(existingUser){
-        throw new AppError("A user with this email already exists!",409);
+        throw new AppError("A user with this email already exists!", 409);
     }
     const session = await mongoose.startSession();
 
@@ -83,16 +83,16 @@ export const registerUser = async(input : RegisterInput) => {
 export const loginUser = async(input : LoginInput) => {
     const user = await User.findOne({ email: input.email.toLowerCase() }).select("+password");
     if(!user){
-        throw new AppError("Invalid email or password!",401);
+        throw new AppError("Invalid email or password!", 401);
     }
     const isPasswordValid = await user.comparePassword(input.password);
     if(!isPasswordValid){
-        throw new AppError("Invalid email or password!",401);
+        throw new AppError("Invalid email or password!", 401);
     }
     const membership = await Membership.findOne({ userId: user._id,});
 
     if(!membership){
-        throw new AppError("No Organization membership found for this user!",404);
+        throw new AppError("No Organization membership found for this user!", 404);
     }
     
     const organization = membership.organizationId;
@@ -118,7 +118,7 @@ export const getCurrentUser = async(userId: string) =>       {
     const user = await User.findById(userId);
 
     if(!user){
-        throw new AppError("User not found!",404);
+        throw new AppError("User not found!", 404);
     }
 
     return {
@@ -133,7 +133,7 @@ export const refreshAccessToken = async (refreshToken: string) => {
     const user = await User.findById(payload.userId);
 
     if(!user){
-        throw new AppError("User no longer exists!",401);
+        throw new AppError("User no longer exists!", 401);
     }
     const accessToken = generateAccessToken(user._id);
 
