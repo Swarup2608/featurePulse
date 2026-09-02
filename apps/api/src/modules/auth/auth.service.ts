@@ -6,6 +6,7 @@ import { Membership } from "../memberships/membership.model";
 import { LoginInput, RegisterInput } from "./auth.validation";
 import { generateSlug } from "../../utils/slug";
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from "../../utils/token";
+import { AppError } from "../../utils/AppError";
 
 export const registerUser = async(input : RegisterInput) => {
     const existingUser = await User.findOne({
@@ -13,7 +14,7 @@ export const registerUser = async(input : RegisterInput) => {
     });
 
     if(existingUser){
-        throw new Error(" A user with the email already exists! ");
+        throw new AppError("A user with this email already exists!",409);
     }
     const session = await mongoose.startSession();
 
@@ -82,16 +83,16 @@ export const registerUser = async(input : RegisterInput) => {
 export const loginUser = async(input : LoginInput) => {
     const user = await User.findOne({ email: input.email.toLowerCase() }).select("+password");
     if(!user){
-        throw new Error("Inavlid email or password!");
+        throw new AppError("Invalid email or password!",401);
     }
     const isPasswordValid = await user.comparePassword(input.password);
     if(!isPasswordValid){
-        throw new Error("Invalid email or password!");
+        throw new AppError("Invalid email or password!",401);
     }
     const membership = await Membership.findOne({ userId: user._id,});
 
     if(!membership){
-        throw new Error("No Organization membership found for this user!");
+        throw new AppError("No Organization membership found for this user!",404);
     }
     
     const organization = membership.organizationId;
@@ -117,7 +118,7 @@ export const getCurrentUser = async(userId: string) =>       {
     const user = await User.findById(userId);
 
     if(!user){
-        throw new Error("User not found!");
+        throw new AppError("User not found!",404);
     }
 
     return {
@@ -132,7 +133,7 @@ export const refreshAccessToken = async (refreshToken: string) => {
     const user = await User.findById(payload.userId);
 
     if(!user){
-        throw new Error("User no longer exists!");
+        throw new AppError("User no longer exists!",401);
     }
     const accessToken = generateAccessToken(user._id);
 

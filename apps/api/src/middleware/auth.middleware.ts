@@ -1,41 +1,30 @@
 import { NextFunction, Request, Response } from "express";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { env } from "../config/env";
+import { AppError } from "../utils/AppError";
 
-interface AccessTokenPayload extends JwtPayload{
+interface AccessTokenPayload extends JwtPayload {
     userId: string;
 }
 
-export const authenticate = (req: Request, res: Response, next: NextFunction) :  void => {
+export const authenticate = (req: Request, res: Response, next: NextFunction): void => {
     try {
         const authorizationHeader = req.headers.authorization;
 
-        if(!authorizationHeader){
-            res.status(401).json({
-                success: false,
-                message: "Authentication required!"
-            });
-
+        if (!authorizationHeader) {
+            next(new AppError("Authentication required!", 401));
             return;
         }
         const [scheme, token] = authorizationHeader.split(" ");
-        if(scheme !== "Bearer" || !token){
-            res.status(401).json({
-                success: false,
-                message: "Invalid authorization header",
-            });
-
+        if (scheme !== "Bearer" || !token) {
+            next(new AppError("Invalid authorization header", 401));
             return;
         }
 
         const decoded = jwt.verify(token, env.JWT_ACCESS_SECRET);
 
-        if(typeof decoded === "string" || !("userId" in decoded)){
-            res.status(401).json({
-                success: false,
-                message: "Invalid access token!",
-            });
-
+        if (typeof decoded === "string" || !("userId" in decoded)) {
+            next(new AppError("Invalid access token!", 401));
             return;
         }
 
@@ -44,19 +33,12 @@ export const authenticate = (req: Request, res: Response, next: NextFunction) : 
         next();
 
     }
-    catch(error){
-        if(error instanceof jwt.TokenExpiredError){
-            res.status(401).json({
-                success: false,
-                message: "Access token expired!"
-            })
-            
+    catch(error) {
+        if (error instanceof jwt.TokenExpiredError) {
+            next(new AppError("Access token expired!", 401));
             return;
         }
 
-        res.status(401).json({
-            success: false,
-            message: "Invalid access token!"
-        });
+        next(new AppError("Invalid access token!", 401));
     }
-}
+};

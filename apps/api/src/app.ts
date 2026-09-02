@@ -4,6 +4,7 @@ import express, { ErrorRequestHandler } from "express";
 import { env } from "./config/env";
 import authRoutes from "./modules/auth/auth.routes";
 import cookieParser from "cookie-parser";
+import { ErrorHandler } from "./middleware/error.middleware";
 
 dotenv.config();
 
@@ -30,19 +31,7 @@ app.get("/health", (_req, res) => {
 
 app.use("/api/v1/auth", authRoutes);
 
-const jsonParseErrorHandler: ErrorRequestHandler = (err, _req, res, next) => {
-  if (err instanceof SyntaxError && "body" in err) {
-    res.status(400).json({
-      success: false,
-      message: "Invalid JSON body. Send raw JSON without wrapping it in quotes.",
-    });
-
-    return;
-  }
-
-  next(err);
-};
-
-app.use(jsonParseErrorHandler);
+// Error middleware MUST come after routes
+app.use(ErrorHandler);
 
 export default app;
