@@ -4,6 +4,8 @@ import express, { ErrorRequestHandler } from "express";
 import { env } from "./config/env";
 import authRoutes from "./modules/auth/auth.routes";
 import projectRoutes from "./modules/projects/project.routes";
+import featureRoutes from "./modules/features/feature.route";
+
 import cookieParser from "cookie-parser";
 import { ErrorHandler } from "./middleware/error.middleware";
 
@@ -32,6 +34,7 @@ app.get("/health", (_req, res) => {
 
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/organizations/:organizationId/projects",projectRoutes);
+app.use("/api/v1/organizations/:organizationId/projects/:projectId/features", featureRoutes);
 
 // Error middleware MUST come after routes
 app.use(ErrorHandler);
