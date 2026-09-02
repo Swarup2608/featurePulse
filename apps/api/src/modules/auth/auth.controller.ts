@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 
 import { registerSchema, loginSchema } from "./auth.validation";
-import { registerUser, loginUser } from "./auth.service";
+import { registerUser, loginUser, getCurrentUser } from "./auth.service";
 import { env } from "../../config/env";
 
 export const registerController = async(req: Request, res: Response): Promise<void> => {
@@ -79,5 +79,38 @@ export const loginController = async(req: Request, res: Response) : Promise<void
             message: "Internal server error",
         });
 
+    }
+}
+
+export const getMe = async(req: Request, res: Response) : Promise<void> => {
+    try{
+        if(!req.userId){
+            res.status(401).json({
+                success: false,
+                message: "Authentication Required!"
+            });
+            return;
+        }
+        const user = await getCurrentUser(req.userId);
+        console.log(user);
+        res.status(200).json({
+            success: true,
+            data:{
+                user
+            }
+        });
+    }
+    catch(error){
+        if(error instanceof Error){
+            res.status(404).json({
+                success: false,
+                message: error.message
+            });
+            return;
+        }
+        res.status(501).json({
+            success: false,
+            message: "Internal server Error!"
+        });
     }
 }

@@ -6,7 +6,6 @@ import { Membership } from "../memberships/membership.model";
 import { LoginInput, RegisterInput } from "./auth.validation";
 import { generateSlug } from "../../utils/slug";
 import { generateAccessToken, generateRefreshToken } from "../../utils/token";
-import id from "zod/v4/locales/id.js";
 
 export const registerUser = async(input : RegisterInput) => {
     const existingUser = await User.findOne({
@@ -113,3 +112,17 @@ export const loginUser = async(input : LoginInput) => {
         },
     };
 };
+
+export const getCurrentUser = async(userId: string) =>       {
+    const user = await User.findById(userId);
+
+    if(!user){
+        throw new Error("User not found!");
+    }
+
+    return {
+        id: user._id,
+        name: user.name,
+        email: user.email
+    }
+}
