@@ -12,7 +12,7 @@ export const authService = {
   },
 
   getMe(token: string) {
-    return apiClient.get<CurrentUserResponse>( "/auth/me", token );
+    return apiClient.get<CurrentUserResponse>( "/auth/me" );
   },
 
   refreshAccessToken() {
