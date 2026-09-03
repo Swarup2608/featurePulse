@@ -4,7 +4,9 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/auth.store";
 
-interface GuestGuardProps { children: React.ReactNode; }
+interface GuestGuardProps {
+  children: React.ReactNode;
+}
 
 export function GuestGuard({ children }: GuestGuardProps) {
   const router = useRouter();
