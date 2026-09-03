@@ -5,5 +5,5 @@ export interface LoginInput { email: string; password: string; }
 export interface AuthResponse { user: User; organization: Organization; }
 export interface CurrentUserResponse { user: User; }
 export interface AuthUser { id: string; name: string; email: string; }
-export interface AuthOrganization { id: string; name: string; slug: string; }
+export interface AuthOrganization { id: string; name: string; slug: string; createdAt?: string; }
 export interface AuthState { user: AuthUser | null; organization: AuthOrganization | null; isAuthenticated: boolean; isLoading: boolean; }

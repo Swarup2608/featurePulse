@@ -1,10 +1,25 @@
+export type ProjectStatus = "ACTIVE" | "ARCHIVED";
+
 export interface Project {
-  id: string;
+  _id: string;
   name: string;
-  key?: string;
+  slug: string;
   description?: string;
+  organizationId: string;
+  createdBy: string;
+  status: ProjectStatus;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface ProjectsResponse {
+  projects: Project[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
 }
 
 export interface CreateProjectInput {
@@ -15,4 +30,5 @@ export interface CreateProjectInput {
 export interface UpdateProjectInput {
   name?: string;
   description?: string;
+  status?: ProjectStatus;
 }
