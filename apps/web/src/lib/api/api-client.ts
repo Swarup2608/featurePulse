@@ -10,6 +10,7 @@ export const apiClient = {
     const response = await fetch(
       `${API_BASE_URL}${endpoint}`,
       { ...requestOptions,
+        credentials: "include",
         headers: {
           "Content-Type": "application/json", ...(token ? {  Authorization: `Bearer ${token}` } : {}),
           ...headers,
