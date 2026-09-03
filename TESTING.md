@@ -5,6 +5,7 @@
 Tests are organized into three categories:
 
 ### 1. Unit Tests
+
 - **Purpose**: Test individual functions in isolation
 - **Location**: `src/__tests__/*.test.ts`
 - **Coverage**: Validation, error handling, utility functions
@@ -12,6 +13,7 @@ Tests are organized into three categories:
 - **Running**: `npm test`
 
 ### 2. Integration Tests
+
 - **Purpose**: Test complete API flows end-to-end
 - **Location**: `src/__tests__/integration.test.ts`
 - **Coverage**: Feature creation → event linking → analytics
@@ -21,6 +23,7 @@ Tests are organized into three categories:
 ### 3. Test Coverage by Module
 
 #### Authentication
+
 - [x] User registration with email/password
 - [x] Login with valid credentials
 - [x] Refresh token rotation
@@ -31,6 +34,7 @@ Tests are organized into three categories:
 - [ ] Password strength requirements
 
 #### Features
+
 - [x] Create feature with valid data
 - [x] Reject duplicate slugs (409 Conflict)
 - [x] Update feature status (DRAFT → ACTIVE → RELEASED → ARCHIVED)
@@ -40,6 +44,7 @@ Tests are organized into three categories:
 - [ ] Feature export/import
 
 #### Events
+
 - [x] Create event definitions
 - [x] List events with pagination
 - [x] Link event to feature (409 on duplicate)
@@ -48,12 +53,14 @@ Tests are organized into three categories:
 - [ ] Event deduplication
 
 #### Event Sources
+
 - [x] Create event source with type/environment
 - [x] List sources with filtering
 - [ ] Toggle source active status
 - [ ] Source health checks
 
 #### API Keys
+
 - [x] Generate API key (return only on creation)
 - [x] List API keys (show prefix only)
 - [x] Revoke API key
@@ -62,6 +69,7 @@ Tests are organized into three categories:
 - [ ] Usage tracking
 
 #### Authorization
+
 - [x] Role-based access control (OWNER/ADMIN/MEMBER/VIEWER)
 - [x] Read access for all roles
 - [x] Write access for OWNER/ADMIN/MEMBER
@@ -70,6 +78,7 @@ Tests are organized into three categories:
 - [ ] Resource-level permissions
 
 #### Input Validation
+
 - [x] Name length validation (2-100 chars)
 - [x] Description length validation (max 500 chars)
 - [x] Enum validation (status, type, environment)
@@ -81,6 +90,7 @@ Tests are organized into three categories:
 - [ ] Custom validation rules
 
 #### Error Handling
+
 - [x] 400 Bad Request for validation errors
 - [x] 401 Unauthorized for missing auth
 - [x] 403 Forbidden for insufficient permissions
@@ -92,6 +102,7 @@ Tests are organized into three categories:
 - [ ] Sentry integration
 
 #### Pagination
+
 - [x] Default limit=10, max limit=100
 - [x] Page minimum 1
 - [x] Total count in response
@@ -100,6 +111,7 @@ Tests are organized into three categories:
 - [ ] Sort options
 
 #### Database
+
 - [x] Indexed fields for queries
 - [x] Compound indexes for multi-field queries
 - [ ] Query performance monitoring
@@ -107,6 +119,7 @@ Tests are organized into three categories:
 - [ ] Connection pooling
 
 #### Security
+
 - [x] Request size limit (10KB)
 - [x] CORS configuration
 - [x] Security headers
@@ -147,21 +160,23 @@ npm test -- --coverage --coverageReporters=text-summary
 ## Mocking Strategy
 
 ### Database
+
 ```typescript
 // Mock MongoDB
-jest.mock('../database', () => ({
+jest.mock("../database", () => ({
   Feature: {
     create: jest.fn(),
     findById: jest.fn(),
     find: jest.fn(),
-  }
+  },
 }));
 ```
 
 ### HTTP Requests
+
 ```typescript
 // Mock external APIs
-jest.mock('axios', () => ({
+jest.mock("axios", () => ({
   get: jest.fn(),
   post: jest.fn(),
 }));
@@ -170,6 +185,7 @@ jest.mock('axios', () => ({
 ## Example Test Cases to Implement
 
 ### Feature Service Tests
+
 ```typescript
 describe("Feature Service", () => {
   describe("createFeature", () => {
@@ -199,6 +215,7 @@ describe("Feature Service", () => {
 ```
 
 ### Authorization Middleware Tests
+
 ```typescript
 describe("Organization Middleware", () => {
   it("should allow OWNER access", () => {
@@ -216,6 +233,7 @@ describe("Organization Middleware", () => {
 ```
 
 ### Validation Tests
+
 ```typescript
 describe("Input Validation", () => {
   it("should reject fields exceeding max length", () => {
@@ -243,7 +261,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
         with:
-          node-version: '18'
+          node-version: "18"
       - run: npm ci
       - run: npm test -- --coverage
       - run: npm run build
