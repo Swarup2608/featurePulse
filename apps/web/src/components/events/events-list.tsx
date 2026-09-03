@@ -24,7 +24,12 @@ export function EventsList({ organizationId, projectId }: EventsListProps) {
       try {
         setLoading(true);
         setError(null);
-        const result = await eventService.getEvents(organizationId, projectId, page, 10);
+        const result = await eventService.getEvents(
+          organizationId,
+          projectId,
+          page,
+          10,
+        );
         setEvents(result.events);
         setTotalPages(result.pagination.totalPages);
       } catch (err) {
@@ -37,9 +42,10 @@ export function EventsList({ organizationId, projectId }: EventsListProps) {
     loadEvents();
   }, [organizationId, projectId, page]);
 
-  const filteredEvents = events.filter((event) =>
-    event.displayName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    event.name.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredEvents = events.filter(
+    (event) =>
+      event.displayName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      event.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   if (loading) {
@@ -59,9 +65,14 @@ export function EventsList({ organizationId, projectId }: EventsListProps) {
         <div className="flex items-start gap-4">
           <AlertCircle size={20} className="mt-0.5 text-red-600" />
           <div>
-            <h3 className="font-semibold text-red-950">Failed to load events</h3>
+            <h3 className="font-semibold text-red-950">
+              Failed to load events
+            </h3>
             <p className="mt-1 text-sm text-red-700">{error}</p>
-            <button onClick={() => window.location.reload()} className="mt-3 rounded-lg bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-700">
+            <button
+              onClick={() => window.location.reload()}
+              className="mt-3 rounded-lg bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-700"
+            >
               Try again
             </button>
           </div>
@@ -87,7 +98,10 @@ export function EventsList({ organizationId, projectId }: EventsListProps) {
   return (
     <div className="space-y-4">
       <div className="relative">
-        <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" />
+        <Search
+          size={18}
+          className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400"
+        />
         <input
           type="text"
           placeholder="Search events by name or display name..."
@@ -100,7 +114,9 @@ export function EventsList({ organizationId, projectId }: EventsListProps) {
       <div className="space-y-2">
         {filteredEvents.length === 0 ? (
           <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-6 text-center">
-            <p className="text-sm text-zinc-500">No events match your search.</p>
+            <p className="text-sm text-zinc-500">
+              No events match your search.
+            </p>
           </div>
         ) : (
           filteredEvents.map((event) => (
@@ -114,10 +130,14 @@ export function EventsList({ organizationId, projectId }: EventsListProps) {
                   {event.displayName}
                 </h3>
                 <p className="mt-1 text-xs text-zinc-500">
-                  {event.name} • Created {new Date(event.createdAt).toLocaleDateString()}
+                  {event.name} • Created{" "}
+                  {new Date(event.createdAt).toLocaleDateString()}
                 </p>
               </div>
-              <ChevronRight size={18} className="text-zinc-300 transition group-hover:translate-x-1 group-hover:text-zinc-600" />
+              <ChevronRight
+                size={18}
+                className="text-zinc-300 transition group-hover:translate-x-1 group-hover:text-zinc-600"
+              />
             </Link>
           ))
         )}

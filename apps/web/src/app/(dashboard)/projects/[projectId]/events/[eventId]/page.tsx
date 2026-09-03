@@ -24,7 +24,11 @@ export default function EventDetailsPage() {
       try {
         setLoading(true);
         setError(null);
-        const data = await eventService.getEventById(organization.id, projectId, eventId);
+        const data = await eventService.getEventById(
+          organization.id,
+          projectId,
+          eventId,
+        );
         setEvent(data);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load event");
@@ -54,7 +58,9 @@ export default function EventDetailsPage() {
           <div className="flex items-start gap-3">
             <AlertCircle size={20} className="mt-0.5 text-red-600" />
             <div className="text-left">
-              <h2 className="font-semibold text-red-950">Unable to load event</h2>
+              <h2 className="font-semibold text-red-950">
+                Unable to load event
+              </h2>
               <p className="mt-1 text-sm text-red-700">{error}</p>
             </div>
           </div>
@@ -143,11 +149,15 @@ export default function EventDetailsPage() {
       </section>
 
       <section className="mt-8 rounded-2xl border border-zinc-200 bg-white p-6">
-        <h2 className="text-lg font-semibold text-zinc-950">Event Information</h2>
+        <h2 className="text-lg font-semibold text-zinc-950">
+          Event Information
+        </h2>
         <div className="mt-6 space-y-4">
           <div className="flex items-center justify-between border-b border-zinc-100 pb-4">
             <span className="text-sm text-zinc-600">Event Name (ID)</span>
-            <span className="font-mono text-sm text-zinc-950">{event.name}</span>
+            <span className="font-mono text-sm text-zinc-950">
+              {event.name}
+            </span>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-sm text-zinc-600">Event ID</span>

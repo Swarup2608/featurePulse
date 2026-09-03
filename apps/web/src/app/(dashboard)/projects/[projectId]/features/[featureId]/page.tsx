@@ -25,7 +25,11 @@ export default function FeatureDetailsPage() {
       try {
         setLoading(true);
         setError(null);
-        const data = await featureService.getFeatureById(organization.id, projectId, featureId);
+        const data = await featureService.getFeatureById(
+          organization.id,
+          projectId,
+          featureId,
+        );
         setFeature(data);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load feature");
@@ -55,7 +59,9 @@ export default function FeatureDetailsPage() {
           <div className="flex items-start gap-3">
             <AlertCircle size={20} className="mt-0.5 text-red-600" />
             <div className="text-left">
-              <h2 className="font-semibold text-red-950">Unable to load feature</h2>
+              <h2 className="font-semibold text-red-950">
+                Unable to load feature
+              </h2>
               <p className="mt-1 text-sm text-red-700">{error}</p>
             </div>
           </div>
@@ -101,7 +107,9 @@ export default function FeatureDetailsPage() {
             <h1 className="text-4xl font-semibold tracking-tight text-zinc-950">
               {feature.name}
             </h1>
-            <p className="mt-2 text-sm font-mono text-zinc-500">{feature.slug}</p>
+            <p className="mt-2 text-sm font-mono text-zinc-500">
+              {feature.slug}
+            </p>
             {feature.description && (
               <p className="mt-6 max-w-2xl text-base leading-7 text-zinc-600">
                 {feature.description}
@@ -148,7 +156,9 @@ export default function FeatureDetailsPage() {
       </section>
 
       <section className="mt-8 rounded-2xl border border-zinc-200 bg-white p-6">
-        <h2 className="text-lg font-semibold text-zinc-950">Feature Information</h2>
+        <h2 className="text-lg font-semibold text-zinc-950">
+          Feature Information
+        </h2>
         <div className="mt-6 space-y-4">
           <div className="flex items-center justify-between border-b border-zinc-100 pb-4">
             <span className="text-sm text-zinc-600">Status</span>
@@ -156,7 +166,9 @@ export default function FeatureDetailsPage() {
           </div>
           <div className="flex items-center justify-between">
             <span className="text-sm text-zinc-600">Feature ID</span>
-            <span className="font-mono text-sm text-zinc-950">{feature._id}</span>
+            <span className="font-mono text-sm text-zinc-950">
+              {feature._id}
+            </span>
           </div>
         </div>
       </section>

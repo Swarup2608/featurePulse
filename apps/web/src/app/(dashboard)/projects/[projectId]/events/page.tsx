@@ -26,7 +26,10 @@ export default function EventsPage() {
       try {
         setLoading(true);
         setError(null);
-        const data = await projectService.getProjectById(organization.id, projectId);
+        const data = await projectService.getProjectById(
+          organization.id,
+          projectId,
+        );
         setProject(data);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load project");
@@ -53,7 +56,9 @@ export default function EventsPage() {
     return (
       <div className="mx-auto flex min-h-[60vh] max-w-xl flex-col items-center justify-center text-center">
         <div className="rounded-2xl border border-red-100 bg-red-50 p-6">
-          <h2 className="text-lg font-semibold text-zinc-950">Unable to load project</h2>
+          <h2 className="text-lg font-semibold text-zinc-950">
+            Unable to load project
+          </h2>
           <p className="mt-2 text-sm text-zinc-500">{error}</p>
           <Link
             href={`/projects/${projectId}`}
