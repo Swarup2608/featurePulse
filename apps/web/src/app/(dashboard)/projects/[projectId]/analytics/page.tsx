@@ -59,7 +59,9 @@ export default function AnalyticsPage() {
     return (
       <div className="mx-auto flex min-h-[60vh] max-w-xl flex-col items-center justify-center text-center">
         <div className="rounded-2xl border border-red-100 bg-red-50 p-6">
-          <h2 className="text-lg font-semibold text-zinc-950">Unable to load analytics</h2>
+          <h2 className="text-lg font-semibold text-zinc-950">
+            Unable to load analytics
+          </h2>
           <p className="mt-2 text-sm text-zinc-500">{error}</p>
           <Link
             href={`/projects/${projectId}`}
@@ -92,7 +94,10 @@ export default function AnalyticsPage() {
       </div>
 
       <section className="mt-8">
-        <AnalyticsDashboard organizationId={organization!.id} projectId={projectId} />
+        <AnalyticsDashboard
+          organizationId={organization!.id}
+          projectId={projectId}
+        />
       </section>
     </div>
   );

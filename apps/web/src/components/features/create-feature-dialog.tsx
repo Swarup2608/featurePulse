@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Plus, Loader2, X } from "lucide-react";
 import { featureService } from "@/lib/api/feature.service";
+import { useToast } from "@/components/toast";
 
 interface CreateFeatureDialogProps {
   organizationId: string;
@@ -15,6 +16,7 @@ export function CreateFeatureDialog({
   projectId,
   onSuccess,
 }: CreateFeatureDialogProps) {
+  const toast = useToast();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -38,12 +40,16 @@ export function CreateFeatureDialog({
         name: trimmedName,
         description: description.trim() || undefined,
       });
+      toast.success(`Feature "${trimmedName}" created successfully`);
       setName("");
       setDescription("");
       setOpen(false);
       onSuccess?.();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create feature");
+      const message =
+        err instanceof Error ? err.message : "Failed to create feature";
+      setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }

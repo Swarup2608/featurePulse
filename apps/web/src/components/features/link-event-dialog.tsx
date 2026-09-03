@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Plus, Loader2, X, AlertCircle } from "lucide-react";
 import { eventService } from "@/lib/api/event.service";
 import { featureEventService } from "@/lib/api/feature-event.service";
+import { useToast } from "@/components/toast";
 import type { EventDefinition } from "@/types/event.types";
 
 interface LinkEventDialogProps {
@@ -19,6 +20,7 @@ export function LinkEventDialog({
   featureId,
   onSuccess,
 }: LinkEventDialogProps) {
+  const toast = useToast();
   const [open, setOpen] = useState(false);
   const [events, setEvents] = useState<EventDefinition[]>([]);
   const [selectedEventId, setSelectedEventId] = useState("");
@@ -57,6 +59,7 @@ export function LinkEventDialog({
     try {
       setLoading(true);
       setError(null);
+      const selectedEvent = events.find((e) => e._id === selectedEventId);
       await featureEventService.addEventToFeature(
         organizationId,
         projectId,
@@ -65,11 +68,14 @@ export function LinkEventDialog({
           eventId: selectedEventId,
         },
       );
+      toast.success(`Event "${selectedEvent?.displayName}" linked to feature`);
       setSelectedEventId("");
       setOpen(false);
       onSuccess?.();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to link event");
+      const message = err instanceof Error ? err.message : "Failed to link event";
+      setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }

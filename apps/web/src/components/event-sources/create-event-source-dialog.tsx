@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Plus, Loader2, X, AlertCircle } from "lucide-react";
 import { eventSourceService } from "@/lib/api/event-source.service";
+import { useToast } from "@/components/toast";
 import {
   EventSourceType,
   EventSourceEnvironment,
@@ -19,6 +20,7 @@ export function CreateEventSourceDialog({
   projectId,
   onSuccess,
 }: CreateEventSourceDialogProps) {
+  const toast = useToast();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [type, setType] = useState<EventSourceType>(EventSourceType.WEB);
@@ -46,15 +48,16 @@ export function CreateEventSourceDialog({
         type,
         environment,
       });
+      toast.success(`Event source "${trimmedName}" created successfully`);
       setName("");
       setType(EventSourceType.WEB);
       setEnvironment(EventSourceEnvironment.PRODUCTION);
       setOpen(false);
       onSuccess?.();
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to create event source",
-      );
+      const message = err instanceof Error ? err.message : "Failed to create event source";
+      setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }

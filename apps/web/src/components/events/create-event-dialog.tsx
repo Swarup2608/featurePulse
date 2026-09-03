@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Plus, Loader2, X, AlertCircle } from "lucide-react";
 import { eventService } from "@/lib/api/event.service";
+import { useToast } from "@/components/toast";
 
 interface CreateEventDialogProps {
   organizationId: string;
@@ -15,6 +16,7 @@ export function CreateEventDialog({
   projectId,
   onSuccess,
 }: CreateEventDialogProps) {
+  const toast = useToast();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [displayName, setDisplayName] = useState("");
@@ -47,13 +49,17 @@ export function CreateEventDialog({
         displayName: trimmedDisplayName,
         description: description.trim() || undefined,
       });
+      toast.success(`Event "${trimmedDisplayName}" created successfully`);
       setName("");
       setDisplayName("");
       setDescription("");
       setOpen(false);
       onSuccess?.();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create event");
+      const message =
+        err instanceof Error ? err.message : "Failed to create event";
+      setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }

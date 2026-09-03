@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Plus, Loader2, X, AlertCircle, Copy, Check } from "lucide-react";
 import { apiKeyService } from "@/lib/api/api-key.service";
+import { useToast } from "@/components/toast";
 
 interface CreateApiKeyDialogProps {
   organizationId: string;
@@ -17,6 +18,7 @@ export function CreateApiKeyDialog({
   sourceId,
   onSuccess,
 }: CreateApiKeyDialogProps) {
+  const toast = useToast();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
@@ -45,10 +47,13 @@ export function CreateApiKeyDialog({
           name: trimmedName,
         },
       );
+      toast.success("API key created successfully");
       setCreatedKey(result.apiKey);
       setName("");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create API key");
+      const message = err instanceof Error ? err.message : "Failed to create API key";
+      setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -57,6 +62,7 @@ export function CreateApiKeyDialog({
   const handleCopyKey = () => {
     if (createdKey) {
       navigator.clipboard.writeText(createdKey);
+      toast.success("API key copied to clipboard");
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
