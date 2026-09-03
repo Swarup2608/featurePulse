@@ -17,6 +17,9 @@ import {
 } from "lucide-react";
 
 import { projectService } from "@/services/project.service";
+import { featureService } from "@/lib/api/feature.service";
+import { eventService } from "@/lib/api/event.service";
+import { eventSourceService } from "@/lib/api/event-source.service";
 import { useAuthStore } from "@/store/auth.store";
 
 import type { Project } from "@/types/project.types";
@@ -25,45 +28,25 @@ interface ProjectDetailsProps {
   projectId: string;
 }
 
-const navigationItems = [
-  {
-    label: "Overview",
-    description: "Project intelligence at a glance",
-    href: "",
-    icon: Activity,
-  },
-  {
-    label: "Features",
-    description: "Manage and track product features",
-    href: "/features",
-    icon: Layers3,
-  },
-  {
-    label: "Events",
-    description: "Explore product activity",
-    href: "/events",
-    icon: Zap,
-  },
-  {
-    label: "Sources",
-    description: "Configure event ingestion",
-    href: "/sources",
-    icon: Database,
-  },
-  {
-    label: "Settings",
-    description: "Project configuration",
-    href: "/settings",
-    icon: Settings,
-  },
+const tabs = [
+  { label: "Overview", icon: Activity },
+  { label: "Features", icon: Layers3 },
+  { label: "Events", icon: Zap },
+  { label: "Sources", icon: Database },
+  { label: "Settings", icon: Settings },
 ];
 
 export function ProjectDetails({ projectId }: ProjectDetailsProps) {
   const organization = useAuthStore((state) => state.organization);
 
   const [project, setProject] = useState<Project | null>(null);
+  const [activeTab, setActiveTab] = useState("Overview");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [featureCount, setFeatureCount] = useState(0);
+  const [eventCount, setEventCount] = useState(0);
+  const [sourceCount, setSourceCount] = useState(0);
+  const [statsLoading, setStatsLoading] = useState(false);
 
   useEffect(() => {
     if (!organization?.id) {
@@ -76,7 +59,6 @@ export function ProjectDetails({ projectId }: ProjectDetailsProps) {
         setError("");
 
         const data = await projectService.getById(organization.id, projectId);
-
         setProject(data.project);
       } catch (error) {
         setError(
@@ -91,6 +73,41 @@ export function ProjectDetails({ projectId }: ProjectDetailsProps) {
 
     loadProject();
   }, [organization?.id, projectId]);
+
+  useEffect(() => {
+    if (!organization?.id || activeTab === "Settings") {
+      return;
+    }
+
+    const loadStats = async () => {
+      try {
+        setStatsLoading(true);
+
+        if (activeTab === "Overview") {
+          const [features, events, sources] = await Promise.all([
+            featureService
+              .getFeatures(organization.id, projectId, 1, 1)
+              .then((r) => r.pagination.total),
+            eventService
+              .getEvents(organization.id, projectId, 1, 1)
+              .then((r) => r.pagination.total),
+            eventSourceService
+              .getEventSources(organization.id, projectId, 1, 1)
+              .then((r) => r.pagination.total),
+          ]);
+          setFeatureCount(features);
+          setEventCount(events);
+          setSourceCount(sources);
+        }
+      } catch (error) {
+        console.error("Failed to load stats", error);
+      } finally {
+        setStatsLoading(false);
+      }
+    };
+
+    loadStats();
+  }, [organization?.id, projectId, activeTab]);
 
   /*
     Important:
@@ -208,90 +225,185 @@ export function ProjectDetails({ projectId }: ProjectDetailsProps) {
       </section>
 
       {/* Intelligence summary */}
-      <section className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <SummaryCard
-          label="Total features"
-          value="—"
-          description="Feature tracking begins here"
-        />
+      {activeTab === "Overview" && (
+        <section className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <SummaryCard
+            label="Total features"
+            value={statsLoading ? "—" : featureCount.toString()}
+            description={
+              featureCount === 0
+                ? "Feature tracking begins here"
+                : `${featureCount} features defined`
+            }
+          />
 
-        <SummaryCard
-          label="Events tracked"
-          value="—"
-          description="Waiting for event sources"
-        />
+          <SummaryCard
+            label="Events tracked"
+            value={statsLoading ? "—" : eventCount.toString()}
+            description={
+              eventCount === 0
+                ? "Waiting for event sources"
+                : `${eventCount} events defined`
+            }
+          />
 
-        <SummaryCard
-          label="Event sources"
-          value="—"
-          description="No sources connected"
-        />
+          <SummaryCard
+            label="Event sources"
+            value={statsLoading ? "—" : sourceCount.toString()}
+            description={
+              sourceCount === 0
+                ? "No sources connected"
+                : `${sourceCount} sources active`
+            }
+          />
 
-        <div className="rounded-2xl border border-violet-100 bg-gradient-to-br from-violet-50 to-white p-5">
-          <p className="text-sm font-medium text-zinc-500">
-            Intelligence status
-          </p>
+          <div className="rounded-2xl border border-violet-100 bg-gradient-to-br from-violet-50 to-white p-5">
+            <p className="text-sm font-medium text-zinc-500">
+              Intelligence status
+            </p>
 
-          <div className="mt-3 flex items-center gap-2">
-            <CheckCircle2 size={20} className="text-violet-600" />
+            <div className="mt-3 flex items-center gap-2">
+              <CheckCircle2 size={20} className="text-violet-600" />
 
-            <p className="font-semibold text-zinc-950">Ready to configure</p>
+              <p className="font-semibold text-zinc-950">Ready to configure</p>
+            </div>
+
+            <p className="mt-2 text-xs text-zinc-400">
+              Connect features and events
+            </p>
           </div>
+        </section>
+      )}
 
-          <p className="mt-2 text-xs text-zinc-400">
-            Connect features and events
-          </p>
-        </div>
-      </section>
-
-      {/* Workspace navigation */}
+      {/* Workspace navigation with tabs */}
       <section className="mt-10">
-        <div>
-          <p className="text-sm font-semibold text-zinc-950">
-            Project workspace
-          </p>
-
-          <p className="mt-1 text-sm text-zinc-500">
-            Manage everything related to this project.
-          </p>
-        </div>
-
-        <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {navigationItems.map((item) => {
-            const Icon = item.icon;
-
-            const href = `/projects/${projectId}${item.href}`;
+        <div className="mb-6 flex items-center gap-2 overflow-x-auto border-b border-zinc-200">
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.label;
 
             return (
-              <Link
-                key={item.label}
-                href={href}
-                className="group flex items-center justify-between rounded-2xl border border-zinc-200 bg-white p-5 transition-all duration-300 hover:-translate-y-1 hover:border-zinc-300 hover:shadow-xl hover:shadow-zinc-200/60"
+              <button
+                key={tab.label}
+                onClick={() => setActiveTab(tab.label)}
+                className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${
+                  isActive
+                    ? "border-b-2 border-violet-600 text-violet-600"
+                    : "text-zinc-600 hover:text-zinc-950"
+                }`}
               >
-                <div className="flex items-center gap-4">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-zinc-100 text-zinc-700 transition group-hover:bg-zinc-950 group-hover:text-white">
-                    <Icon size={20} />
-                  </div>
-
-                  <div>
-                    <h2 className="font-semibold text-zinc-950">
-                      {item.label}
-                    </h2>
-
-                    <p className="mt-1 text-sm text-zinc-500">
-                      {item.description}
-                    </p>
-                  </div>
-                </div>
-
-                <ChevronRight
-                  size={20}
-                  className="text-zinc-300 transition group-hover:translate-x-1 group-hover:text-zinc-950"
-                />
-              </Link>
+                <Icon size={18} />
+                {tab.label}
+              </button>
             );
           })}
         </div>
+
+        {activeTab === "Overview" && (
+          <div className="mt-6">
+            <p className="text-sm font-semibold text-zinc-950">Quick access</p>
+            <p className="mt-1 text-sm text-zinc-500">
+              Jump to any section to manage your project.
+            </p>
+
+            <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {["Features", "Events", "Sources"].map((tab) => {
+                const tabConfig = tabs.find((t) => t.label === tab);
+                if (!tabConfig) return null;
+                const Icon = tabConfig.icon;
+
+                return (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    className="group flex items-center justify-between rounded-2xl border border-zinc-200 bg-white p-5 transition-all duration-300 hover:-translate-y-1 hover:border-zinc-300 hover:shadow-xl hover:shadow-zinc-200/60"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-zinc-100 text-zinc-700 transition group-hover:bg-zinc-950 group-hover:text-white">
+                        <Icon size={20} />
+                      </div>
+                      <div className="text-left">
+                        <h2 className="font-semibold text-zinc-950">{tab}</h2>
+                      </div>
+                    </div>
+                    <ChevronRight
+                      size={20}
+                      className="text-zinc-400 transition group-hover:translate-x-1 group-hover:text-zinc-600"
+                    />
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {activeTab === "Features" && (
+          <div>
+            <p className="text-base font-medium text-zinc-950">
+              Manage product features
+            </p>
+            <p className="mt-2 text-sm text-zinc-500">
+              Define, track, and release features with built-in event tracking.
+            </p>
+            <Link
+              href={`/projects/${projectId}/features`}
+              className="mt-5 inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-violet-700"
+            >
+              Go to Features
+              <ChevronRight size={16} />
+            </Link>
+          </div>
+        )}
+
+        {activeTab === "Events" && (
+          <div>
+            <p className="text-base font-medium text-zinc-950">
+              Manage product events
+            </p>
+            <p className="mt-2 text-sm text-zinc-500">
+              Define custom events to track user interactions and behavior.
+            </p>
+            <Link
+              href={`/projects/${projectId}/events`}
+              className="mt-5 inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-violet-700"
+            >
+              Go to Events
+              <ChevronRight size={16} />
+            </Link>
+          </div>
+        )}
+
+        {activeTab === "Sources" && (
+          <div>
+            <p className="text-base font-medium text-zinc-950">
+              Configure event sources
+            </p>
+            <p className="mt-2 text-sm text-zinc-500">
+              Connect web, mobile, and backend event sources.
+            </p>
+            <Link
+              href={`/projects/${projectId}/event-sources`}
+              className="mt-5 inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-violet-700"
+            >
+              Go to Sources
+              <ChevronRight size={16} />
+            </Link>
+          </div>
+        )}
+
+        {activeTab === "Settings" && (
+          <div>
+            <p className="text-base font-medium text-zinc-950">
+              Project settings
+            </p>
+            <p className="mt-2 text-sm text-zinc-500">
+              Configure project properties and integrations.
+            </p>
+            <p className="mt-5 text-sm text-zinc-400">
+              Settings page coming soon
+            </p>
+          </div>
+        )}
       </section>
     </div>
   );
