@@ -7,6 +7,7 @@ import { Loader2, ArrowLeft, AlertCircle, Calendar, User } from "lucide-react";
 import { useAuthStore } from "@/store/auth.store";
 import { featureService } from "@/lib/api/feature.service";
 import { FeatureStatusBadge } from "@/components/features/feature-status-badge";
+import { FeatureEventsSection } from "@/components/features/feature-events-section";
 import type { Feature } from "@/types/feature.types";
 
 export default function FeatureDetailsPage() {
@@ -173,10 +174,12 @@ export default function FeatureDetailsPage() {
         </div>
       </section>
 
-      <section className="mt-8 rounded-2xl border border-dashed border-zinc-300 bg-zinc-50 p-8 text-center">
-        <p className="text-sm text-zinc-600">
-          Event tracking and analytics coming soon
-        </p>
+      <section className="mt-8 rounded-2xl border border-zinc-200 bg-white p-6">
+        <FeatureEventsSection
+          organizationId={organization!.id}
+          projectId={projectId}
+          featureId={featureId}
+        />
       </section>
     </div>
   );
