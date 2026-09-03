@@ -73,7 +73,8 @@ export function LinkEventDialog({
       setOpen(false);
       onSuccess?.();
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to link event";
+      const message =
+        err instanceof Error ? err.message : "Failed to link event";
       setError(message);
       toast.error(message);
     } finally {

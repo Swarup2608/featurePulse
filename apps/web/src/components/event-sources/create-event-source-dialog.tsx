@@ -55,7 +55,8 @@ export function CreateEventSourceDialog({
       setOpen(false);
       onSuccess?.();
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to create event source";
+      const message =
+        err instanceof Error ? err.message : "Failed to create event source";
       setError(message);
       toast.error(message);
     } finally {

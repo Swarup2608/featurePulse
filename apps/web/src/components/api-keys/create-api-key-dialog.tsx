@@ -51,7 +51,8 @@ export function CreateApiKeyDialog({
       setCreatedKey(result.apiKey);
       setName("");
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to create API key";
+      const message =
+        err instanceof Error ? err.message : "Failed to create API key";
       setError(message);
       toast.error(message);
     } finally {
