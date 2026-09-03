@@ -1,5 +1,6 @@
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
+import { AuthGuard } from "@/components/auth/auth-guard";
 
 export default function DashboardLayout({
   children,
@@ -7,14 +8,16 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-zinc-50">
-      <Sidebar />
+    <AuthGuard>
+      <div className="min-h-screen bg-zinc-50">
+        <Sidebar />
 
-      <div className="lg:pl-64">
-        <Header />
+        <div className="lg:pl-64">
+          <Header />
 
-        <main className="p-6 lg:p-8">{children}</main>
+          <main className="p-6 lg:p-8">{children}</main>
+        </div>
       </div>
-    </div>
+    </AuthGuard>
   );
 }
