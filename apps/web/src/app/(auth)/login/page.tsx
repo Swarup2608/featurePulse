@@ -23,7 +23,11 @@ export default function LoginPage() {
   const setAuth = useAuthStore((state) => state.setAuth);
   const [showPassword, setShowPassword] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginFormData>({ resolver: zodResolver(loginSchema) });
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<LoginFormData>({ resolver: zodResolver(loginSchema) });
 
   const onSubmit = async (data: LoginFormData) => {
     try {
@@ -89,89 +93,23 @@ export default function LoginPage() {
             </div>
 
             <form onSubmit={handleSubmit(onSubmit)} className="mt-10 space-y-5">
-              {serverError && (
-                <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300">
-                  {serverError}
-                </div>
-              )}
+              {serverError && <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300">{serverError}</div>}
               <div className="space-y-2">
-                <label
-                  htmlFor="email"
-                  className="text-sm font-medium text-zinc-300"
-                >
-                  Email address
-                </label>
-                <input
-                  id="email"
-                  type="email"
-                  placeholder="you@company.com"
-                  autoComplete="email"
-                  {...register("email")}
-                  className="h-12 w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 text-sm outline-none transition placeholder:text-zinc-600 focus:border-white/30 focus:bg-white/[0.06]"
-                />
-                {errors.email && (
-                  <p className="text-xs text-red-400">{errors.email.message}</p>
-                )}
+                <label htmlFor="email" className="text-sm font-medium text-zinc-300">Email address</label>
+                <input id="email" type="email" placeholder="you@company.com" autoComplete="email" {...register("email")} className="h-12 w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 text-sm outline-none transition placeholder:text-zinc-600 focus:border-white/30 focus:bg-white/[0.06]" />
+                {errors.email && <p className="text-xs text-red-400">{errors.email.message}</p>}
               </div>
-
               <div className="space-y-2">
-                <label
-                  htmlFor="password"
-                  className="text-sm font-medium text-zinc-300"
-                >
-                  Password
-                </label>
+                <label htmlFor="password" className="text-sm font-medium text-zinc-300">Password</label>
                 <div className="relative">
-                  <input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Enter your password"
-                    autoComplete="current-password"
-                    {...register("password")}
-                    className="h-12 w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 pr-12 text-sm outline-none transition placeholder:text-zinc-600 focus:border-white/30 focus:bg-white/[0.06]"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 transition hover:text-white"
-                  >
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
+                  <input id="password" type={showPassword ? "text" : "password"} placeholder="Enter your password" autoComplete="current-password" {...register("password")} className="h-12 w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 pr-12 text-sm outline-none transition placeholder:text-zinc-600 focus:border-white/30 focus:bg-white/[0.06]" />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 transition hover:text-white">{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button>
                 </div>
-                {errors.password && (
-                  <p className="text-xs text-red-400">
-                    {errors.password.message}
-                  </p>
-                )}
+                {errors.password && <p className="text-xs text-red-400">{errors.password.message}</p>}
               </div>
-
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-white font-medium text-black transition hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 size={18} className="animate-spin" />
-                    Signing in...
-                  </>
-                ) : (
-                  <>
-                    Sign in to FeaturePulse
-                    <ArrowRight size={18} />
-                  </>
-                )}
-              </button>
+              <button type="submit" disabled={isSubmitting} className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-white font-medium text-black transition hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-60">{isSubmitting ? <><Loader2 size={18} className="animate-spin" />Signing in...</> : <>Sign in to FeaturePulse<ArrowRight size={18} /></>}</button>
             </form>
-            <p className="mt-8 text-center text-sm text-zinc-500">
-              New to FeaturePulse?{" "}
-              <Link
-                href="/register"
-                className="font-medium text-white hover:underline"
-              >
-                Create an account
-              </Link>
-            </p>
+            <p className="mt-8 text-center text-sm text-zinc-500">New to FeaturePulse? <Link href="/register" className="font-medium text-white hover:underline">Create an account</Link></p>
           </div>
         </section>
       </div>
