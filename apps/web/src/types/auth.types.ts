@@ -1,5 +1,5 @@
 export interface User {
-  _id: string;
+  id: string;
   name: string;
   email: string;
   createdAt?: string;
@@ -7,7 +7,7 @@ export interface User {
 }
 
 export interface Organization {
-  _id: string;
+  id: string;
   name: string;
   slug?: string;
   createdAt?: string;
@@ -29,13 +29,8 @@ export interface LoginInput {
 export interface AuthResponse {
   user: User;
   organization: Organization;
-  accessToken: string;
 }
 
 export interface CurrentUserResponse {
   user: User;
-}
-
-export interface RefreshTokenResponse {
-  accessToken: string;
 }
