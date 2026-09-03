@@ -1,96 +1,215 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ApiError, authService } from "@/lib/api";
+import { useState } from "react";
+
+import { zodResolver } from "@hookform/resolvers/zod";
+import { ArrowRight, Eye, EyeOff, Loader2 } from "lucide-react";
+import { useForm } from "react-hook-form";
+
+import { ApiError } from "@/lib/api/api-error";
+import { authService } from "@/lib/api/auth.service";
+import {
+  loginSchema,
+  type LoginFormData,
+} from "@/lib/validations/auth.validation";
+import { useAuthStore } from "@/store/auth.store";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setError(null);
-    setIsLoading(true);
+  const setAuth = useAuthStore((state) => state.setAuth);
+
+  const [showPassword, setShowPassword] = useState(false);
+
+  const [serverError, setServerError] = useState<string | null>(null);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+  });
+
+  const onSubmit = async (data: LoginFormData) => {
     try {
-      await authService.login({ email, password });
+      setServerError(null);
+
+      const authData = await authService.login(data);
+
+      setAuth(authData.user, authData.organization);
+
       router.push("/dashboard");
     } catch (error) {
-      if (error instanceof ApiError) setError(error.message);
-      else setError("Something went wrong. Please try again.");
-    } finally {
-      setIsLoading(false);
+      if (error instanceof ApiError) {
+        setServerError(error.message);
+        return;
+      }
+
+      setServerError("Something went wrong. Please try again.");
     }
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-6 py-12">
-      <div className="w-full max-w-md">
-        <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold">Welcome back</h1>
-          <p className="mt-2 text-sm text-gray-500">
-            Sign in to your FeaturePulse workspace.
-          </p>
-        </div>
-        <form onSubmit={handleSubmit} className="space-y-5">
-          {error && (
-            <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-600">
-              {error}
+    <main className="min-h-screen bg-[#09090b] text-white">
+      <div className="grid min-h-screen lg:grid-cols-2">
+        {/* Left Side */}
+        <section className="relative hidden overflow-hidden border-r border-white/10 lg:flex lg:flex-col lg:justify-between p-12">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.15),transparent_40%)]" />
+
+          <div className="relative">
+            <Link href="/" className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-black font-bold">
+                F
+              </div>
+
+              <span className="text-xl font-semibold">FeaturePulse</span>
+            </Link>
+          </div>
+
+          <div className="relative max-w-md">
+            <p className="mb-6 text-sm font-medium text-zinc-400">
+              PRODUCT INTELLIGENCE PLATFORM
+            </p>
+
+            <h1 className="text-5xl font-semibold tracking-tight">
+              Understand how your users experience your features.
+            </h1>
+
+            <p className="mt-6 text-lg leading-8 text-zinc-400">
+              Track feature adoption, understand product behavior, and make
+              better product decisions with real-time event intelligence.
+            </p>
+          </div>
+
+          <div className="relative text-sm text-zinc-500">
+            Built for modern product teams.
+          </div>
+        </section>
+
+        {/* Right Side */}
+        <section className="flex items-center justify-center px-6 py-12 sm:px-10">
+          <div className="w-full max-w-md">
+            {/* Mobile Logo */}
+            <Link href="/" className="mb-14 flex items-center gap-3 lg:hidden">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-black font-bold">
+                F
+              </div>
+
+              <span className="text-xl font-semibold">FeaturePulse</span>
+            </Link>
+
+            <div>
+              <p className="text-sm text-zinc-500">Welcome back</p>
+
+              <h2 className="mt-2 text-3xl font-semibold tracking-tight">
+                Sign in to your workspace
+              </h2>
+
+              <p className="mt-3 text-sm leading-6 text-zinc-400">
+                Continue monitoring your features and product activity.
+              </p>
             </div>
-          )}
-          <div>
-            <label htmlFor="email" className="mb-2 block text-sm font-medium">
-              Email address
-            </label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              required
-              className="w-full rounded-lg border px-4 py-3 outline-none"
-              placeholder="you@example.com"
-            />
+
+            <form onSubmit={handleSubmit(onSubmit)} className="mt-10 space-y-5">
+              {serverError && (
+                <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+                  {serverError}
+                </div>
+              )}
+
+              {/* Email */}
+              <div className="space-y-2">
+                <label
+                  htmlFor="email"
+                  className="text-sm font-medium text-zinc-300"
+                >
+                  Email address
+                </label>
+
+                <input
+                  id="email"
+                  type="email"
+                  placeholder="you@company.com"
+                  autoComplete="email"
+                  {...register("email")}
+                  className="h-12 w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 text-sm outline-none transition placeholder:text-zinc-600 focus:border-white/30 focus:bg-white/[0.06]"
+                />
+
+                {errors.email && (
+                  <p className="text-xs text-red-400">{errors.email.message}</p>
+                )}
+              </div>
+
+              {/* Password */}
+              <div className="space-y-2">
+                <label
+                  htmlFor="password"
+                  className="text-sm font-medium text-zinc-300"
+                >
+                  Password
+                </label>
+
+                <div className="relative">
+                  <input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Enter your password"
+                    autoComplete="current-password"
+                    {...register("password")}
+                    className="h-12 w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 pr-12 text-sm outline-none transition placeholder:text-zinc-600 focus:border-white/30 focus:bg-white/[0.06]"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 transition hover:text-white"
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+
+                {errors.password && (
+                  <p className="text-xs text-red-400">
+                    {errors.password.message}
+                  </p>
+                )}
+              </div>
+
+              {/* Submit */}
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-white font-medium text-black transition hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 size={18} className="animate-spin" />
+                    Signing in...
+                  </>
+                ) : (
+                  <>
+                    Sign in to FeaturePulse
+                    <ArrowRight size={18} />
+                  </>
+                )}
+              </button>
+            </form>
+
+            <p className="mt-8 text-center text-sm text-zinc-500">
+              New to FeaturePulse?{" "}
+              <Link
+                href="/register"
+                className="font-medium text-white hover:underline"
+              >
+                Create an account
+              </Link>
+            </p>
           </div>
-          <div>
-            <label
-              htmlFor="password"
-              className="mb-2 block text-sm font-medium"
-            >
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              required
-              className="w-full rounded-lg border px-4 py-3 outline-none"
-              placeholder="Enter your password"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full rounded-lg bg-black px-4 py-3 font-medium text-white disabled:opacity-50"
-          >
-            {isLoading ? "Signing in..." : "Sign in"}
-          </button>
-        </form>
-        <p className="mt-6 text-center text-sm text-gray-500">
-          Don't have an account?{" "}
-          <button
-            type="button"
-            onClick={() => router.push("/register")}
-            className="font-medium text-black underline"
-          >
-            Create one
-          </button>
-        </p>
+        </section>
       </div>
-    </div>
+    </main>
   );
 }
