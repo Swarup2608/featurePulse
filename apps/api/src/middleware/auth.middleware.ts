@@ -9,15 +9,14 @@ interface AccessTokenPayload extends JwtPayload {
 
 export const authenticate = (req: Request, res: Response, next: NextFunction): void => {
     try {
-        const authorizationHeader = req.headers.authorization;
+       const cookieToken = req.cookies?.accessToken;
 
-        if (!authorizationHeader) {
+        const authorizationHeader = req.headers.authorization;
+        const bearerToken = authorizationHeader?.startsWith("Bearer ") ? authorizationHeader.split(" ")[1] : undefined;
+
+        const token = cookieToken || bearerToken;
+        if (!token) {
             next(new AppError("Authentication required!", 401));
-            return;
-        }
-        const [scheme, token] = authorizationHeader.split(" ");
-        if (scheme !== "Bearer" || !token) {
-            next(new AppError("Invalid authorization header", 401));
             return;
         }
 
@@ -31,7 +30,6 @@ export const authenticate = (req: Request, res: Response, next: NextFunction): v
         const payload = decoded as AccessTokenPayload;
         req.userId = payload.userId;
         next();
-
     }
     catch(error) {
         if (error instanceof jwt.TokenExpiredError) {
