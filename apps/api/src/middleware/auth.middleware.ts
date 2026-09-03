@@ -4,39 +4,20 @@ import { env } from "../config/env";
 import { AppError } from "../utils/AppError";
 
 interface AccessTokenPayload extends JwtPayload {
-    userId: string;
+  userId: string;
 }
 
-export const authenticate = (req: Request, res: Response, next: NextFunction): void => {
-    try {
-       const cookieToken = req.cookies?.accessToken;
-
-        const authorizationHeader = req.headers.authorization;
-        const bearerToken = authorizationHeader?.startsWith("Bearer ") ? authorizationHeader.split(" ")[1] : undefined;
-
-        const token = cookieToken || bearerToken;
-        if (!token) {
-            next(new AppError("Authentication required!", 401));
-            return;
-        }
-
-        const decoded = jwt.verify(token, env.JWT_ACCESS_SECRET);
-
-        if (typeof decoded === "string" || !("userId" in decoded)) {
-            next(new AppError("Invalid access token!", 401));
-            return;
-        }
-
-        const payload = decoded as AccessTokenPayload;
-        req.userId = payload.userId;
-        next();
-    }
-    catch(error) {
-        if (error instanceof jwt.TokenExpiredError) {
-            next(new AppError("Access token expired!", 401));
-            return;
-        }
-
-        next(new AppError("Invalid access token!", 401));
-    }
+export const authenticate = (req: Request, _res: Response, next: NextFunction): void => {
+  try {
+    const accessToken = req.cookies?.accessToken;
+    if (!accessToken) { next(new AppError("Authentication required!", 401)); return; }
+    const decoded = jwt.verify(accessToken, env.JWT_ACCESS_SECRET);
+    if (typeof decoded === "string" || !("userId" in decoded)) { next(new AppError("Invalid access token!", 401)); return; }
+    const payload = decoded as AccessTokenPayload;
+    req.userId = payload.userId;
+    next();
+  } catch (error) {
+    if (error instanceof jwt.TokenExpiredError) { next(new AppError("Access token expired!", 401)); return; }
+    next(new AppError("Invalid access token!", 401));
+  }
 };

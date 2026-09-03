@@ -1,20 +1,25 @@
 import { apiClient } from "./api-client";
-import type { AuthResponse, CurrentUserResponse, LoginInput, RegisterInput } from "@/types/auth.types";
+import type { AuthOrganization, AuthUser } from "@/types/auth.types";
+
+interface AuthResponse { user: AuthUser; organization: AuthOrganization; }
+interface LoginInput { email: string; password: string; }
+interface RegisterInput { name: string; email: string; password: string; organizationName: string; }
+interface CurrentUserResponse { user: AuthUser; }
 
 export const authService = {
-  register(data: RegisterInput) {
+  async register(data: RegisterInput): Promise<AuthResponse> {
     return apiClient.post<AuthResponse>("/auth/register", data);
   },
-  login(data: LoginInput) {
+  async login(data: LoginInput): Promise<AuthResponse> {
     return apiClient.post<AuthResponse>("/auth/login", data);
   },
-  getMe() {
-    return apiClient.get<CurrentUserResponse>("/auth/me");
+  async getMe(): Promise<AuthResponse> {
+    return apiClient.get<AuthResponse>("/auth/me");
   },
-  refreshAccessToken() {
-    return apiClient.post<Record<string, never>>("/auth/refresh");
+  async logout(): Promise<void> {
+    await apiClient.post<void>("/auth/logout");
   },
-  logout() {
-    return apiClient.post<Record<string, never>>("/auth/logout");
+  async refresh(): Promise<void> {
+    await apiClient.post<void>("/auth/refresh");
   },
 };

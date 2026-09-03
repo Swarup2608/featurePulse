@@ -30,8 +30,8 @@ export const loginController = async (req: Request, res: Response): Promise<void
 
 export const getMeController = async (req: Request, res: Response): Promise<void> => {
   if (!req.userId) throw new AppError("Authentication required", 401);
-  const user = await getCurrentUser(req.userId);
-  res.status(200).json({ success: true, data: { user } });
+  const authData = await getCurrentUser(req.userId);
+  res.status(200).json({ success: true, data: authData });
 };
 
 export const refreshAccessTokenController = async (req: Request, res: Response): Promise<void> => {

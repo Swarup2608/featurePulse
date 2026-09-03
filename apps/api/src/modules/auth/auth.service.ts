@@ -120,12 +120,27 @@ export const getCurrentUser = async(userId: string) =>       {
     if(!user){
         throw new AppError("User not found!", 404);
     }
-
-    return {
-        id: user._id,
-        name: user.name,
-        email: user.email
+    const membership = await Membership.findOne({ userId: user._id }).populate("organizationId");
+    if (!membership) {
+        throw new AppError( "Organization membership not found!", 404 );
     }
+    const organization = await Organization.findById( membership.organizationId );
+    if (!organization) {
+        throw new AppError( "Organization not found!", 404 );
+    }
+    return {
+        user: {
+            id: user._id.toString(),
+            name: user.name,
+            email: user.email,
+        },
+
+        organization: {
+            id: organization._id.toString(),
+            name: organization.name,
+            slug: organization.slug,
+        },
+    };
 }
 
 export const refreshAccessToken = async (refreshToken: string) => {

@@ -1,20 +1,28 @@
 import { apiClient } from "./api-client";
 import type { CreateProjectInput, Project, UpdateProjectInput } from "@/types/project.types";
 
+interface ApiResponse<T> { success: boolean; message?: string; data: T; }
+interface ProjectResponse { project: Project; }
+interface ProjectsResponse { projects: Project[]; }
+
 export const projectService = {
-  getAll(organizationId: string) {
-    return apiClient.get<Project[]>(`/organizations/${organizationId}/projects`);
+  async getAll(organizationId: string): Promise<Project[]> {
+    const response = await apiClient.get<ApiResponse<ProjectsResponse>>(`/organizations/${organizationId}/projects`);
+    return response.data.projects;
   },
-  create(organizationId: string, data: CreateProjectInput) {
-    return apiClient.post<Project>(`/organizations/${organizationId}/projects`, data);
+  async create(organizationId: string, data: CreateProjectInput): Promise<Project> {
+    const response = await apiClient.post<ApiResponse<ProjectResponse>>(`/organizations/${organizationId}/projects`, data);
+    return response.data.project;
   },
-  getById(organizationId: string, projectId: string) {
-    return apiClient.get<Project>(`/organizations/${organizationId}/projects/${projectId}`);
+  async getById(organizationId: string, projectId: string): Promise<Project> {
+    const response = await apiClient.get<ApiResponse<ProjectResponse>>(`/organizations/${organizationId}/projects/${projectId}`);
+    return response.data.project;
   },
-  update(organizationId: string, projectId: string, data: UpdateProjectInput) {
-    return apiClient.patch<Project>(`/organizations/${organizationId}/projects/${projectId}`, data);
+  async update(organizationId: string, projectId: string, data: UpdateProjectInput): Promise<Project> {
+    const response = await apiClient.patch<ApiResponse<ProjectResponse>>(`/organizations/${organizationId}/projects/${projectId}`, data);
+    return response.data.project;
   },
-  delete(organizationId: string, projectId: string) {
-    return apiClient.delete<void>(`/organizations/${organizationId}/projects/${projectId}`);
+  async delete(organizationId: string, projectId: string): Promise<void> {
+    await apiClient.delete(`/organizations/${organizationId}/projects/${projectId}`);
   },
 };
