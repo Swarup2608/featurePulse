@@ -1,18 +1,9 @@
 import { Request, Response } from "express";
 import { AppError } from "../../utils/AppError";
 import { asyncHandler } from "../../utils/asyncHandler";
+import { validateParams } from "../../utils/validateParams";
 import { archiveFeature, createFeature, getFeatureById, getFeatures, updateFeature } from "./feature.service";
 import { createFeatureSchema, updateFeatureSchema } from "./feature.validation";
-
-const validateParams = (params: Record<string, any>, keys: string[]): Record<string, string> => {
-  const result: Record<string, string> = {};
-  for (const key of keys) {
-    const value = params[key];
-    if (!value || Array.isArray(value)) throw new AppError(`${key.charAt(0).toUpperCase() + key.slice(1)} is required`, 400);
-    result[key] = value;
-  }
-  return result;
-};
 
 export const createController = asyncHandler(async (req: Request, res: Response) => {
   if (!req.userId) throw new AppError("User not authenticated", 401);
