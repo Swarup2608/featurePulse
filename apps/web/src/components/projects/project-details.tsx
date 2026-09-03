@@ -13,6 +13,7 @@ import {
   Layers3,
   Loader2,
   Settings,
+  TrendingUp,
   Zap,
 } from "lucide-react";
 
@@ -33,6 +34,7 @@ const tabs = [
   { label: "Features", icon: Layers3 },
   { label: "Events", icon: Zap },
   { label: "Sources", icon: Database },
+  { label: "Analytics", icon: TrendingUp },
   { label: "Settings", icon: Settings },
 ];
 
@@ -307,7 +309,7 @@ export function ProjectDetails({ projectId }: ProjectDetailsProps) {
             </p>
 
             <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {["Features", "Events", "Sources"].map((tab) => {
+              {["Features", "Events", "Sources", "Analytics"].map((tab) => {
                 const tabConfig = tabs.find((t) => t.label === tab);
                 if (!tabConfig) return null;
                 const Icon = tabConfig.icon;
@@ -386,6 +388,24 @@ export function ProjectDetails({ projectId }: ProjectDetailsProps) {
               className="mt-5 inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-violet-700"
             >
               Go to Sources
+              <ChevronRight size={16} />
+            </Link>
+          </div>
+        )}
+
+        {activeTab === "Analytics" && (
+          <div>
+            <p className="text-base font-medium text-zinc-950">
+              Project analytics and metrics
+            </p>
+            <p className="mt-2 text-sm text-zinc-500">
+              View feature adoption, event tracking, and intelligence metrics.
+            </p>
+            <Link
+              href={`/projects/${projectId}/analytics`}
+              className="mt-5 inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-violet-700"
+            >
+              View Analytics
               <ChevronRight size={16} />
             </Link>
           </div>
