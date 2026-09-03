@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { authService } from "@/lib/api/auth.service";
+import { ApiError } from "@/lib/api/api-error";
 import { useAuthStore } from "@/store/auth.store";
 import { SessionLoadingScreen } from "./session-loading-screen";
 
@@ -17,20 +18,26 @@ export function SessionInitializer({
   useEffect(() => {
     const initializeSession = async () => {
       try {
-        // First attempt: Check whether the access token is valid.
+        // First attempt: existing access token
         const authData = await authService.getMe();
         setAuth(authData.user, authData.organization);
-      } catch {
-        try {
-          // Access token may have expired. Attempt to refresh it using the HttpOnly refresh token cookie.
-          await authService.refresh();
-          // The backend creates a new access token cookie.
-          const authData = await authService.getMe();
-          setAuth(authData.user, authData.organization);
-        } catch {
-          // No valid session exists.
-          clearAuth();
+      } catch (error) {
+        // Only attempt token refresh for authentication failures
+        if (error instanceof ApiError && error.status === 401) {
+          try {
+            // Refresh token is sent automatically as an HttpOnly cookie
+            await authService.refresh();
+            // New access token cookie should now exist
+            const authData = await authService.getMe();
+            setAuth(authData.user, authData.organization);
+          } catch {
+            // Refresh token is also invalid or expired
+            clearAuth();
+          }
+          return;
         }
+        // Server/network errors should not trigger token refresh
+        clearAuth();
       }
     };
     initializeSession();
