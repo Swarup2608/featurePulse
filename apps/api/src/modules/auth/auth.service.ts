@@ -89,28 +89,18 @@ export const loginUser = async(input : LoginInput) => {
     if(!isPasswordValid){
         throw new AppError("Invalid email or password!", 401);
     }
-    const membership = await Membership.findOne({ userId: user._id,});
-
+    const membership = await Membership.findOne({ userId: user._id });
     if(!membership){
         throw new AppError("No Organization membership found for this user!", 404);
     }
-    
-    const organization = membership.organizationId;
-
+    const organization = await Organization.findById(membership.organizationId);
+    if (!organization) { throw new AppError("Organization not found!", 404); }
     const accessToken = generateAccessToken(user._id);
     const refreshToken = generateRefreshToken(user._id);
-    
     return {
-        user:{
-            id: user._id,
-            name: user.name,
-            email: user.email,
-        },
-        organization,
-        tokens:{
-            accessToken,
-            refreshToken
-        },
+        user: { id: user._id.toString(), name: user.name, email: user.email },
+        organization: { id: organization._id.toString(), name: organization.name, slug: organization.slug },
+        tokens: { accessToken, refreshToken },
     };
 };
 

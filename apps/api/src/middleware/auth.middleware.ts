@@ -9,7 +9,9 @@ interface AccessTokenPayload extends JwtPayload {
 
 export const authenticate = (req: Request, _res: Response, next: NextFunction): void => {
   try {
-    const accessToken = req.cookies?.accessToken;
+    let accessToken: string | undefined;
+    const authHeader = req.headers.authorization;
+    if (authHeader?.startsWith("Bearer ")) { accessToken = authHeader.substring(7); } else { accessToken = req.cookies?.accessToken; }
     if (!accessToken) { next(new AppError("Authentication required!", 401)); return; }
     const decoded = jwt.verify(accessToken, env.JWT_ACCESS_SECRET);
     if (typeof decoded === "string" || !("userId" in decoded)) { next(new AppError("Invalid access token!", 401)); return; }
