@@ -36,5 +36,6 @@ export function SessionInitializer({
     initializeSession();
   }, [setAuth, clearAuth]);
 
+  if (isLoading) return <SessionLoadingScreen />;
   return <>{children}</>;
 }
