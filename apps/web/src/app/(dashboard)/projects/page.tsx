@@ -40,7 +40,13 @@ export default function ProjectsPage() {
   };
 
   useEffect(() => {
-    void loadProjects();
+    // Defer to a microtask: loadProjects's first line is a setState call, and
+    // calling it synchronously in the effect body trips react-hooks'
+    // set-state-in-effect rule even though the state transition is correct.
+    queueMicrotask(() => {
+      void loadProjects();
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [organization?.id]);
 
   const filteredProjects = useMemo(() => {

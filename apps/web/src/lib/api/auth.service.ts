@@ -4,7 +4,6 @@ import type { AuthOrganization, AuthUser } from "@/types/auth.types";
 interface AuthResponse { user: AuthUser; organization: AuthOrganization; }
 interface LoginInput { email: string; password: string; }
 interface RegisterInput { name: string; email: string; password: string; organizationName: string; }
-interface CurrentUserResponse { user: AuthUser; }
 
 export const authService = {
   async register(data: RegisterInput): Promise<AuthResponse> {

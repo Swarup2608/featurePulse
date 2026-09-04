@@ -62,6 +62,9 @@ export const apiClient = {
       const errorData = responseData as ApiErrorResponse | null;
       throw new ApiError(errorData?.message || "Something went wrong", response.status, errorData?.errors);
     }
+    // A 204 has no body to unwrap — nothing was parsed above, so return null
+    // directly rather than reading `.data` off of it.
+    if (responseData === null) return null as T;
     return (responseData as ApiSuccessResponse<T>).data;
   },
   get<T>(endpoint: string): Promise<T> {

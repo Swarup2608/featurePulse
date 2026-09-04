@@ -95,7 +95,7 @@ export function FeatureEventsSection({
             Tracked events
           </h3>
           <p className="mt-1 text-sm text-zinc-500">
-            Events that measure this feature's usage and adoption
+            Events that measure this feature&apos;s usage and adoption
           </p>
         </div>
         <LinkEventDialog

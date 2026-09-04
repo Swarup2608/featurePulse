@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Loader2, Search, Plus, ChevronRight, AlertCircle } from "lucide-react";
 import { featureService } from "@/lib/api/feature.service";
-import type { Feature, FeaturesResponse } from "@/types/feature.types";
+import type { Feature } from "@/types/feature.types";
 
 interface FeaturesListProps {
   organizationId: string;
