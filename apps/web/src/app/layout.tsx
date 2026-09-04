@@ -15,9 +15,19 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "FeaturePulse",
+  title: {
+    default: "FeaturePulse — Feature intelligence for engineering teams",
+    template: "%s · FeaturePulse",
+  },
   description:
-    "A multi-tenant product analytics platform for engineering and product teams.",
+    "A multi-tenant feature intelligence platform: track feature lifecycle, define events, manage sources and API keys, and measure instrumentation coverage.",
+  applicationName: "FeaturePulse",
+  openGraph: {
+    title: "FeaturePulse — Feature intelligence for engineering teams",
+    description:
+      "Track feature lifecycle, define events, manage sources and API keys, and measure instrumentation coverage.",
+    type: "website",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
