@@ -38,9 +38,22 @@ export const createEventSource = async (organizationId: string, projectId: strin
   });
 };
 
-export const getEventSources = async (organizationId: string, projectId: string) => {
+export const getEventSources = async (organizationId: string, projectId: string, page: number = 1, limit: number = 10) => {
   await validateProject(organizationId, projectId);
-  return EventSource.find({ organizationId, projectId }).sort({ createdAt: -1 });
+  const skip = (page - 1) * limit;
+  const [eventSources, total] = await Promise.all([
+    EventSource.find({ organizationId, projectId }).sort({ createdAt: -1 }).skip(skip).limit(limit),
+    EventSource.countDocuments({ organizationId, projectId }),
+  ]);
+  return {
+    eventSources,
+    pagination: {
+      page,
+      total,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
 };
 
 export const getEventSourceById = async (organizationId: string, projectId: string, eventSourceId: string) => {

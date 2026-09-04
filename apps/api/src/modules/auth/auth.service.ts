@@ -7,6 +7,35 @@ import { LoginInput, RegisterInput } from "./auth.validation";
 import { generateSlug } from "../../utils/slug";
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from "../../utils/token";
 import { AppError } from "../../utils/AppError";
+import { redis } from "../../config/redis";
+
+// Account-level brute-force defense, layered on top of the per-IP rate limiter.
+// Keyed by email, so a determined attacker can briefly lock a known account —
+// an accepted trade-off for slowing distributed credential-stuffing.
+const LOGIN_LOCKOUT_THRESHOLD = 10;
+const LOGIN_LOCKOUT_WINDOW_SECONDS = 15 * 60;
+
+const loginAttemptKey = (email: string) => `lockout:login:${email}`;
+
+const assertNotLockedOut = async (email: string): Promise<void> => {
+    if (!redis) return;
+    const attempts = await redis.get<number>(loginAttemptKey(email));
+    if (attempts && attempts >= LOGIN_LOCKOUT_THRESHOLD) {
+        throw new AppError("Account temporarily locked due to too many failed login attempts. Try again later.", 429);
+    }
+};
+
+const recordFailedLogin = async (email: string): Promise<void> => {
+    if (!redis) return;
+    const key = loginAttemptKey(email);
+    const attempts = await redis.incr(key);
+    if (attempts === 1) await redis.expire(key, LOGIN_LOCKOUT_WINDOW_SECONDS);
+};
+
+const clearFailedLogins = async (email: string): Promise<void> => {
+    if (!redis) return;
+    await redis.del(loginAttemptKey(email));
+};
 
 export const registerUser = async(input : RegisterInput) => {
     const existingUser = await User.findOne({
@@ -81,14 +110,20 @@ export const registerUser = async(input : RegisterInput) => {
 };
 
 export const loginUser = async(input : LoginInput) => {
-    const user = await User.findOne({ email: input.email.toLowerCase() }).select("+password");
+    const email = input.email.toLowerCase();
+    await assertNotLockedOut(email);
+
+    const user = await User.findOne({ email }).select("+password");
     if(!user){
+        await recordFailedLogin(email);
         throw new AppError("Invalid email or password!", 401);
     }
     const isPasswordValid = await user.comparePassword(input.password);
     if(!isPasswordValid){
+        await recordFailedLogin(email);
         throw new AppError("Invalid email or password!", 401);
     }
+    await clearFailedLogins(email);
     const membership = await Membership.findOne({ userId: user._id });
     if(!membership){
         throw new AppError("No Organization membership found for this user!", 404);

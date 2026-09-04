@@ -31,7 +31,22 @@ const envSchema = z.object({
     JWT_ACCESS_EXPIRES_IN: jwtExpiresInSchema.default("15m"),
 
     JWT_REFRESH_EXPIRES_IN: jwtExpiresInSchema.default("7d"),
-});
+
+    // Upstash Redis — backs rate limiting and login lockout. Optional locally
+    // (limiter degrades to pass-through with a warning); required in production.
+    UPSTASH_REDIS_REST_URL: z.string().url().optional(),
+
+    UPSTASH_REDIS_REST_TOKEN: z.string().min(1).optional(),
+}).refine(
+    (data) =>
+        data.NODE_ENV !== "production" ||
+        (Boolean(data.UPSTASH_REDIS_REST_URL) && Boolean(data.UPSTASH_REDIS_REST_TOKEN)),
+    {
+        message:
+            "UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN are required when NODE_ENV=production",
+        path: ["UPSTASH_REDIS_REST_URL"],
+    }
+);
 
 const parsedEnv = envSchema.safeParse(process.env);
 

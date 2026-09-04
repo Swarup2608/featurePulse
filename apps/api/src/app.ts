@@ -1,8 +1,12 @@
 import cors from "cors";
-import dotenv from "dotenv";
-import express, { ErrorRequestHandler } from "express";
-import { env } from "./config/env";
+import express from "express";
+import helmet from "helmet";
 import cookieParser from "cookie-parser";
+import { env } from "./config/env";
+import { connectDatabase } from "./config/database";
+import { CSRF_HEADER_NAME } from "./config/cookies";
+import { csrfProtection } from "./middleware/csrf.middleware";
+import { apiRateLimiter } from "./middleware/rate-limit.middleware";
 import { ErrorHandler } from "./middleware/error.middleware";
 
 // Routers Import
@@ -13,64 +17,77 @@ import eventRoutes from "./modules/events/event.routes";
 import featureEventRoutes from "./modules/feature-events/feature-event.routes";
 import eventSourceRoutes from "./modules/event-sources/event-source.routes";
 import apiKeyRoutes from "./modules/api-keys/api-key.routes";
-
-dotenv.config();
+import analyticsRoutes from "./modules/analytics/analytics.routes";
 
 const app = express();
 
-// Security: Set rate limiting via middleware
-// In production, consider using Redis-backed rate limiter like express-rate-limit with store
-const apiLimiter = (req: any, res: any, next: any) => {
-  // Simple in-memory rate limiting (replace with Redis in production)
-  next();
-};
+// Behind Vercel's proxy: trust the first hop so req.ip / req.protocol are correct.
+app.set("trust proxy", 1);
+
+// Security headers + a locked-down CSP (this API only ever serves JSON).
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'none'"],
+        frameAncestors: ["'none'"],
+        baseUri: ["'none'"],
+      },
+    },
+    crossOriginResourcePolicy: { policy: "same-site" },
+    referrerPolicy: { policy: "no-referrer" },
+  })
+);
 
 // Security: Limit request payload size to prevent abuse
 app.use(express.json({ limit: "10kb" }));
 app.use(express.urlencoded({ limit: "10kb", extended: true }));
 
-// Security: CORS configuration
+// Security: CORS — single trusted origin, credentials enabled for cookie auth.
 app.use(
   cors({
     origin: env.CLIENT_URL,
     credentials: true,
     optionsSuccessStatus: 200,
     methods: ["GET", "POST", "PATCH", "DELETE"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    allowedHeaders: ["Content-Type", "Authorization", CSRF_HEADER_NAME],
   })
 );
 
-// Security: Cookie parsing with secure options
+// Security: Cookie parsing
 app.use(cookieParser());
 
-// Security: Add security headers
-app.use((_req, res, next) => {
-  res.setHeader("X-Content-Type-Options", "nosniff");
-  res.setHeader("X-Frame-Options", "DENY");
-  res.setHeader("X-XSS-Protection", "1; mode=block");
-  res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
-  next();
-});
-
-// Health check endpoint
+// Health check endpoint (no CSRF / rate limit).
 app.get("/health", (_req, res) => {
   res.status(200).json({
     success: true,
     message: "FeaturePulse API is running",
-    environment: env.NODE_ENV,
   });
 });
 
-// Apply API limiter to all API routes
-app.use("/api/v1/", apiLimiter);
+// Ensure the (cached) database connection before handling API traffic. On Vercel
+// this runs per invocation; the helper is idempotent and reuses warm pools.
+app.use("/api/v1/", (_req, res, next) => {
+  connectDatabase().then(next).catch(next);
+});
 
-app.use( "/api/v1/auth", authRoutes );
-app.use( "/api/v1/organizations/:organizationId/projects",projectRoutes );
-app.use( "/api/v1/organizations/:organizationId/projects/:projectId/features", featureRoutes );
-app.use( "/api/v1/organizations/:organizationId/projects/:projectId/events", eventRoutes );
-app.use( "/api/v1/organizations/:organizationId/projects/:projectId/features/:featureId/events", featureEventRoutes );
-app.use( "/api/v1/organizations/:organizationId/projects/:projectId/event-sources", eventSourceRoutes );
-app.use( "/api/v1/organizations/:organizationId/projects/:projectId/event-sources/:eventSourceId/api-keys", apiKeyRoutes );
+// Rate limiting + CSRF for the whole API surface.
+app.use("/api/v1/", apiRateLimiter);
+app.use("/api/v1/", csrfProtection);
+
+// CSRF bootstrap: hand the double-submit token to the web client.
+app.get("/api/v1/csrf", (_req, res) => {
+  res.status(200).json({ success: true, data: { csrfToken: res.locals.csrfToken } });
+});
+
+app.use("/api/v1/auth", authRoutes);
+app.use("/api/v1/organizations/:organizationId/projects", projectRoutes);
+app.use("/api/v1/organizations/:organizationId/projects/:projectId/features", featureRoutes);
+app.use("/api/v1/organizations/:organizationId/projects/:projectId/events", eventRoutes);
+app.use("/api/v1/organizations/:organizationId/projects/:projectId/features/:featureId/events", featureEventRoutes);
+app.use("/api/v1/organizations/:organizationId/projects/:projectId/event-sources", eventSourceRoutes);
+app.use("/api/v1/organizations/:organizationId/projects/:projectId/event-sources/:eventSourceId/api-keys", apiKeyRoutes);
+app.use("/api/v1/organizations/:organizationId/projects/:projectId/analytics", analyticsRoutes);
 
 // Error middleware MUST come after routes
 app.use(ErrorHandler);

@@ -1,5 +1,31 @@
 # Security Review & Hardening Guide
 
+> **Accuracy note (2026-09-04).** This document was originally aspirational and
+> over-stated the implemented state. The list below reflects what is actually in
+> the code after the P0 hardening pass:
+>
+> **Implemented:** JWT access/refresh in httpOnly cookies; bcrypt (cost 12)
+> password hashing; RBAC with organization/project isolation; Zod validation on
+> auth/project/feature/event/source/key endpoints; CORS locked to `CLIENT_URL`
+> with credentials; `helmet` with a locked-down CSP on the API and a full
+> security-header set (CSP, HSTS, Referrer-Policy, X-Frame-Options, …) on the web
+> app; **real rate limiting + account lockout** via Upstash Redis
+> (`src/middleware/rate-limit.middleware.ts`, login lockout in `auth.service.ts`);
+> **CSRF protection** for the cross-site cookie session — double-submit token
+> (`GET /api/v1/csrf` + `X-CSRF-Token` header) plus an `Origin` allow-list
+> (`src/middleware/csrf.middleware.ts`); cross-site cookies set
+> `SameSite=None; Secure`; refresh cookie scoped to `/api/v1/auth`; request body
+> capped at 10 KB; generic 5xx messages (no stack traces to clients);
+> `.env.example` for both apps.
+>
+> **Not implemented (tracked as follow-ups):** token/refresh revocation store,
+> refresh-token rotation, password-reset flow, session invalidation on password
+> change, 2FA, structured logging + request-ID tracing, response compression,
+> per-request timeouts, API-key hashing upgrade (currently unsalted SHA-256, not
+> bcrypt), CI-gated `npm audit` / Dependabot, event-ingestion auth.
+>
+> HTTPS/TLS is provided by Vercel for both projects.
+
 ## ✅ Completed Security Measures
 
 ### 1. Authentication Security
@@ -8,28 +34,36 @@
   - AccessToken: 15 minutes (shorter for security)
   - RefreshToken: 7 days (longer for user experience)
 - [x] HTTP-only cookies prevent JavaScript access
-- [x] Secure flag set for HTTPS connections
-- [x] SameSite=Strict to prevent CSRF
+- [x] Secure flag set on every Vercel deployment (not gated on NODE_ENV alone)
+- [x] `SameSite=None; Secure` for the cross-site cookie session, paired with
+      double-submit CSRF token + Origin allow-list (see §CSRF)
 - [x] Bearer token fallback for API clients
-- [x] Token refresh mechanism prevents long-lived tokens
-- [x] Logout clears tokens from client
+- [x] Refresh cookie scoped to `path=/api/v1/auth`
+- [x] Token refresh mechanism prevents long-lived access tokens
+- [x] Logout clears cookies from the client
+- [ ] Server-side token/refresh revocation — **not implemented**; a stolen token
+      is valid until it expires regardless of logout
+- [ ] Refresh-token rotation — **not implemented**
 
 ### 2. Password Security
 
-- [x] Passwords hashed with bcrypt (cost factor configurable)
-- [x] Minimum password requirements (should be enforced at registration)
+- [x] Passwords hashed with bcrypt (cost factor 12, hardcoded)
+- [x] Minimum length enforced at registration (8–128 chars); no complexity or
+      breached-password check
 - [x] No plaintext passwords stored/transmitted
-- [x] Password reset via email link (implementation ready)
-- [x] Session invalidation on password change
+- [ ] Password reset via email link — **not implemented**
+- [ ] Session invalidation on password change — **not implemented**
 
 ### 3. API Key Security
 
-- [x] API keys hashed in database (bcrypt)
+- [x] API keys hashed in database — **unsalted SHA-256** (not bcrypt); upgrade to
+      a keyed HMAC / per-key salt before ingestion auth ships
 - [x] Only keyPrefix visible in list endpoints
 - [x] Full key returned only at creation time
 - [x] Key rotation via revoke and create new
 - [x] API key prefixes prevent accidental exposure
-- [x] Expiration dates configurable per key
+- [ ] Per-key expiration — schema field exists, not enforced
+- [ ] API keys are **not yet consumed** anywhere (no ingestion endpoint)
 
 ### 4. Authorization & Access Control
 
@@ -74,12 +108,17 @@
 
 ### 8. Security Headers
 
-- [x] X-Content-Type-Options: nosniff (prevents MIME type sniffing)
-- [x] X-Frame-Options: DENY (prevents clickjacking)
-- [x] X-XSS-Protection: 1; mode=block (legacy XSS protection)
-- [x] Strict-Transport-Security (for HTTPS enforcement)
-- [x] Content-Security-Policy (recommended for production)
-- [x] Referrer-Policy: strict-no-referrer (privacy)
+All headers below are now set by `helmet` on the API and by `next.config.ts`
+`headers()` on the web app:
+
+- [x] X-Content-Type-Options: nosniff
+- [x] X-Frame-Options: DENY
+- [x] Strict-Transport-Security: max-age 2y, includeSubDomains, preload
+- [x] Content-Security-Policy — `default-src 'none'` on the API; a scoped policy
+      on the web app (`connect-src` allows the API origin)
+- [x] Referrer-Policy: no-referrer
+- [x] Permissions-Policy: camera/microphone/geolocation disabled (web app)
+- [x] X-XSS-Protection: 0 (set by helmet; the old `1; mode=block` is deprecated)
 
 ### 9. HTTPS/TLS
 
@@ -121,31 +160,35 @@
 - [x] Consistent error response format
 - [x] HTTP status codes appropriate for error type
 
-### 13. Rate Limiting Foundation
+### 13. Rate Limiting
 
-- [x] Middleware infrastructure ready
-- [ ] Per-endpoint rate limiting (implement with express-rate-limit + Redis)
-  - POST /auth/register: 5 per hour
-  - POST /auth/login: 10 per hour
-  - POST /api/v1/organizations/\*/projects: 100 per hour per user
-  - POST /api/v1/organizations/_/projects/_/features: 500 per hour
-  - General API: 1000 per hour per user
+- [x] Implemented with `@upstash/ratelimit` + `@upstash/redis`
+      (`src/middleware/rate-limit.middleware.ts`). Sliding window, keyed by client
+      IP (behind `trust proxy`). Fails open on limiter infrastructure errors.
+  - General API (`/api/v1/*`): 100 / 60s
+  - `POST /auth/login`, `/auth/register`, `/auth/refresh`: 10 / 60s
+- [x] Account lockout: 10 failed logins per email in 15 min → `429`
+      (`auth.service.ts`). Layered on the per-IP limiter.
+- [x] `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` required when
+      `NODE_ENV=production` (enforced in `config/env.ts`); optional locally, where
+      the limiter degrades to pass-through.
 
 ### 14. Request/Response Security
 
 - [x] Request size limits (10KB max payload)
-- [x] Response compression recommended (gzip)
-- [x] No sensitive data in logs/monitoring
-- [x] Timeout on slow endpoints (prevent resource exhaustion)
-- [x] Request ID tracking for debugging
+- [ ] Response compression (gzip/br) — **not implemented** (Vercel's edge may add it)
+- [ ] Structured logging with redaction — **not implemented** (only `console.*`)
+- [ ] Per-request timeout — **not implemented**
+- [ ] Request-ID / trace-ID tracking — **not implemented**
 
 ### 15. Dependency Security
 
-- [x] npm dependencies regularly updated
-- [x] Use npm audit to check for vulnerabilities
-- [x] Vulnerable dependencies removed
-- [x] No hardcoded versions (use ^version)
-- [x] Security patches applied promptly
+- [x] `npm audit` clean on the API (0 vulnerabilities as of 2026-09-04)
+- [x] Lockfiles committed for both apps
+- [x] `apps/api/.npmrc` sets `legacy-peer-deps=true` (ts-jest's peer range still
+      caps TypeScript `<7`; the project runs TS 7 and uses `@swc/jest` to run
+      tests)
+- [ ] CI-gated `npm audit` / Dependabot — **not configured** (no CI yet)
 
 ## ⚠️ Recommendations for Production
 
@@ -351,9 +394,13 @@ logger.warn("Unauthorized access attempt", { userId, resource: req.path });
 
 #### Penetration Testing Checklist
 
-- [ ] Cross-Site Request Forgery (CSRF)
-  - Tokens sent in cookies (SameSite=Strict protects)
-  - Verify Origin header checking
+- [x] Cross-Site Request Forgery (CSRF)
+  - Double-submit token: `GET /api/v1/csrf` issues an httpOnly `csrfToken`
+    cookie + returns the value; state-changing requests must echo it in the
+    `X-CSRF-Token` header (`src/middleware/csrf.middleware.ts`)
+  - `Origin` header checked against the `CLIENT_URL` allow-list on unsafe methods
+  - `SameSite=None` cookies (cross-site deployment), so the token + Origin check
+    are the real protection, not SameSite
 - [ ] Cross-Site Scripting (XSS)
   - Inject `<script>alert('xss')</script>` in form fields
   - Verify it's escaped in response
@@ -500,18 +547,24 @@ console.log({ password: '***' });
 
 ## Summary
 
-**Current Status**: ✅ **Production-Ready Security Foundation**
+**Current Status**: Core security controls implemented (auth, RBAC, validation,
+rate limiting + lockout, CSRF, security headers/CSP). Not yet hardened for
+high-assurance production — see the "Not implemented" list at the top.
 
-**Immediate Actions** (Pre-Production):
+**Done in the P0 pass:** HTTPS (Vercel), strong JWT secret enforcement, rate
+limiting + account lockout, CSRF protection, helmet + CSP, `.env.example`,
+cross-site cookie hardening, working test runner.
 
-1. Enable HTTPS
-2. Set strong JWT secrets
-3. Configure rate limiting
-4. Set up monitoring/logging
-5. Complete penetration testing
-6. Implement CSP headers
-7. Enable database encryption
-8. Set up automated backup
+**Still required before a serious production launch:**
+
+1. Rotate the MongoDB Atlas credentials currently in the working-tree `.env`
+2. Token/refresh revocation store + refresh-token rotation
+3. Structured logging + monitoring/alerting (Sentry or equivalent)
+4. CI with typecheck + tests + `npm audit` gate
+5. Real integration tests (auth, RBAC denial, tenant isolation)
+6. Upgrade API-key hashing (HMAC / per-key salt)
+7. Penetration testing
+8. Automated database backups
 
 **Post-Launch** (Ongoing):
 

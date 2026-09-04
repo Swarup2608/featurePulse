@@ -19,10 +19,12 @@ export const createController = asyncHandler(async (req: Request, res: Response)
 
 export const getAllController = asyncHandler(async (req: Request, res: Response) => {
   const { organizationId, projectId } = validateParams(req.params, ["organizationId", "projectId"]);
-  const eventSources = await getEventSources(organizationId, projectId);
+  const page = Math.max(1, Number(req.query.page) || 1);
+  const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 10));
+  const result = await getEventSources(organizationId, projectId, page, limit);
   res.status(200).json({
     success: true,
-    data: { eventSources },
+    data: result,
   });
 });
 
